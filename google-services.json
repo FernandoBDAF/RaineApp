@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "358132660024",
+    "project_id": "raineapp-backend",
+    "storage_bucket": "raineapp-backend.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:358132660024:android:078cff7541918a754633cd",
+        "android_client_info": {
+          "package_name": "com.raine.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCduHHKABdmy4iafnYCsazuEzWWJWtCtSM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
