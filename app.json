@@ -43,6 +43,9 @@
       ],
       "expo-dev-client",
       "@react-native-firebase/app",
+      "@react-native-firebase/crashlytics"
+      "expo-dev-client",
+      "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "@react-native-firebase/firestore",
       "@react-native-firebase/functions",
