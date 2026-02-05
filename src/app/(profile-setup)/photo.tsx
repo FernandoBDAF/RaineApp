@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View } from "react-native";
 import { useRouter } from "expo-router";
-import * as ImageManipulator from "expo-image-manipulator";
+import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import { ContinueButton } from "../../components/profile-setup/ContinueButton";
 import { PhotoUpload } from "../../components/profile-setup/PhotoUpload";
 import { SetupHeader } from "../../components/profile-setup/SetupHeader";
@@ -24,11 +24,13 @@ export default function PhotoScreen() {
     if (photoURL) {
       setLoading(true);
       try {
-        const manipulated = await ImageManipulator.manipulateAsync(
-          photoURL,
-          [{ resize: { width: 800 } }],
-          { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
-        );
+        const context = ImageManipulator.manipulate(photoURL);
+        context.resize({ width: 800 });
+        const image = await context.renderAsync();
+        const manipulated = await image.saveAsync({
+          compress: 0.8,
+          format: SaveFormat.JPEG,
+        });
         const remoteUrl = await uploadProfilePhoto(user.uid, manipulated.uri);
         setPhoto(remoteUrl);
       } finally {

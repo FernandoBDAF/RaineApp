@@ -1,4 +1,4 @@
-import { getCountyFromZip, isApprovedZip } from "./zipToCounty";
+import { getCountyFromZip, isApprovedZip } from './zipToCounty';
 
 interface ZipLookupResult {
   valid: boolean;
@@ -11,7 +11,7 @@ interface ZipLookupResult {
 
 export async function lookupZipCode(zipCode: string): Promise<ZipLookupResult> {
   if (!/^\d{5}$/.test(zipCode)) {
-    return { valid: false, error: "Please enter a valid zip code" };
+    return { valid: false, error: 'Please enter a valid zip code' };
   }
 
   const county = getCountyFromZip(zipCode);
@@ -33,22 +33,22 @@ export async function lookupZipCode(zipCode: string): Promise<ZipLookupResult> {
 
     return {
       valid: true,
-      city: place["place name"],
-      state: place["state abbreviation"],
-      county: county || "Unknown",
+      city: place['place name'],
+      state: place['state abbreviation'],
+      county: county || 'Unknown',
       isApproved
     };
   } catch {
     if (county) {
       return {
         valid: true,
-        city: "Unknown",
-        state: "CA",
+        city: 'Unknown',
+        state: 'CA',
         county,
         isApproved: true
       };
     }
-    return { valid: false, error: "Unable to verify zip code" };
+    return { valid: false, error: 'Unable to verify zip code' };
   }
 }
 

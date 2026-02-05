@@ -1,4 +1,5 @@
 import { isFirebaseMockMode, config } from '../../config/environment';
+import remoteConfig from '@react-native-firebase/remote-config';
 
 const defaultFlags = {
   chatReactionsEnabled: true,
@@ -17,17 +18,18 @@ export async function initRemoteConfig() {
   }
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const remoteConfig = require('@react-native-firebase/remote-config').default;
     const rc = remoteConfig();
     await rc.setDefaults(defaultFlags);
-    
+
     try {
       await rc.fetchAndActivate();
-      const snapshot = Object.keys(defaultFlags).reduce((acc, key) => {
-        acc[key] = rc.getValue(key).asBoolean();
-        return acc;
-      }, {} as Record<string, boolean>);
+      const snapshot = Object.keys(defaultFlags).reduce(
+        (acc, key) => {
+          acc[key] = rc.getValue(key).asBoolean();
+          return acc;
+        },
+        {} as Record<string, boolean>
+      );
       cachedFlags = snapshot;
     } catch {
       // Keep cached defaults if fetch fails

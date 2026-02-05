@@ -8,7 +8,7 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash-screen.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -39,14 +39,22 @@
           "root": "src/app"
         }
       ],
-      "expo-dev-client"
+      "expo-dev-client",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useModularHeaders": true
+          }
+        }
+      ]
     ],
     "extra": {
       "router": {
         "root": "src/app"
       },
       "eas": {
-        "projectId": "4df1738a-f338-4b36-9bd2-1370bd095e15"
+        "projectId": "90743f25-a1d2-4070-8d97-7716eb395973"
       }
     }
   }

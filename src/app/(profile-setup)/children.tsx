@@ -1,24 +1,18 @@
-import React, { useMemo } from "react";
-import { Pressable, Text, View } from "react-native";
-import { useRouter } from "expo-router";
-import { ChildForm } from "../../components/profile-setup/ChildForm";
-import { ContinueButton } from "../../components/profile-setup/ContinueButton";
-import { SetupHeader } from "../../components/profile-setup/SetupHeader";
-import { useProfileSetupStore } from "../../store/profileSetupStore";
-import type { Child, DueDate } from "../../types/profile-setup";
+import React, { useMemo } from 'react';
+import { KeyboardAvoidingView, Pressable, ScrollView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { ChildForm } from '../../components/profile-setup/ChildForm';
+import { ContinueButton } from '../../components/profile-setup/ContinueButton';
+import { SetupHeader } from '../../components/profile-setup/SetupHeader';
+import { useProfileSetupStore } from '../../store/profileSetupStore';
+import type { Child, DueDate } from '../../types/profile-setup';
 
 const CHILD_COUNT_OPTIONS = [1, 2, 3, 4];
 
 export default function ChildrenScreen() {
   const router = useRouter();
-  const {
-    childCount,
-    isExpecting,
-    dueDate,
-    children,
-    setChildren,
-    setCurrentStep
-  } = useProfileSetupStore();
+  const { childCount, isExpecting, dueDate, children, setChildren, setCurrentStep } =
+    useProfileSetupStore();
 
   const canContinue = useMemo(() => {
     if (childCount <= 0) {
@@ -40,8 +34,12 @@ export default function ChildrenScreen() {
   }, [childCount, isExpecting, dueDate, children]);
 
   const updateChildCount = (count: number) => {
+    if (count === childCount) {
+      setChildren(0, [], isExpecting, dueDate);
+      return;
+    }
     const nextChildren: Child[] = Array.from({ length: count }).map((_, index) => {
-      return children[index] ?? { name: "", birthMonth: 0, birthYear: 0 };
+      return children[index] ?? { name: '', birthMonth: 0, birthYear: 0 };
     });
     setChildren(count, nextChildren, isExpecting, dueDate);
   };
@@ -63,24 +61,27 @@ export default function ChildrenScreen() {
       return;
     }
     setCurrentStep(6);
-    router.push("/(profile-setup)/before-motherhood");
+    router.push('/(profile-setup)/before-motherhood');
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <SetupHeader headline="Tell us about your children" subheadline="HOW MANY CHILDREN DO YOU HAVE?" />
-      <View className="flex-1 px-6 pt-6">
+    <KeyboardAvoidingView className="flex-1 bg-white">
+      <SetupHeader
+        headline="Tell us about your children"
+        subheadline="HOW MANY CHILDREN DO YOU HAVE?"
+      />
+      <ScrollView className="flex-1 px-6 pt-6" keyboardShouldPersistTaps="handled">
         <View className="flex-row gap-2">
           {CHILD_COUNT_OPTIONS.map((count) => (
             <Pressable
               key={`count-${count}`}
               onPress={() => updateChildCount(count)}
               className={`flex-1 rounded-full border px-4 py-2 ${
-                childCount === count ? "border-orange-500 bg-orange-50" : "border-slate-200"
+                childCount === count ? 'border-orange-500 bg-orange-50' : 'border-slate-200'
               }`}
             >
               <Text className="text-center text-sm font-semibold text-slate-700">
-                {count === 4 ? "4+" : count}
+                {count === 4 ? '4+' : count}
               </Text>
             </Pressable>
           ))}
@@ -90,16 +91,14 @@ export default function ChildrenScreen() {
           <Pressable
             onPress={toggleExpecting}
             className={`rounded-full border px-4 py-2 ${
-              isExpecting ? "border-orange-500 bg-orange-50" : "border-slate-200"
+              isExpecting ? 'border-orange-500 bg-orange-50' : 'border-slate-200'
             }`}
           >
-            <Text className="text-center text-sm font-semibold text-slate-700">
-              I'm Expecting
-            </Text>
+            <Text className="text-center text-sm font-semibold text-slate-700">I'm Expecting</Text>
           </Pressable>
         </View>
 
-        <View className="mt-6">
+        <View className="mt-6 mb-6">
           <ChildForm
             childCount={childCount}
             children={children}
@@ -109,8 +108,8 @@ export default function ChildrenScreen() {
             onDueDateChange={handleDueDateChange}
           />
         </View>
-      </View>
+      </ScrollView>
       <ContinueButton onPress={handleContinue} disabled={!canContinue} />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
