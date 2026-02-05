@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { shallow } from "zustand/shallow";
+import { useShallow } from "zustand/react/shallow";
 import { ContinueButton } from "../../components/profile-setup/ContinueButton";
 import { SetupHeader } from "../../components/profile-setup/SetupHeader";
 import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
@@ -16,7 +16,8 @@ export default function BioScreen() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const payload = useProfileSetupStore((state) => ({
+  const payload = useProfileSetupStore(
+    useShallow((state) => ({
     firstName: state.firstName,
     lastInitial: state.lastInitial,
     photoURL: state.photoURL,
@@ -41,7 +42,8 @@ export default function BioScreen() {
     bioApproved: state.bioApproved,
     currentStep: state.currentStep,
     completed: state.completed
-  }), shallow);
+    }))
+  );
   const setBio = useProfileSetupStore((state) => state.setBio);
   const completeSetup = useProfileSetupStore((state) => state.completeSetup);
   const setCurrentStep = useProfileSetupStore((state) => state.setCurrentStep);
