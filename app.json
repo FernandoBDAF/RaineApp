@@ -16,12 +16,14 @@
     "ios": {
       "bundleIdentifier": "com.raine.app",
       "supportsTablet": true,
+      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.raine.app",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -40,14 +42,15 @@
         }
       ],
       "expo-dev-client",
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "useModularHeaders": true
-          }
-        }
-      ]
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "@react-native-firebase/firestore",
+      "@react-native-firebase/functions",
+      "@react-native-firebase/storage",
+      "@react-native-firebase/messaging",
+      "@react-native-firebase/crashlytics",
+      "@react-native-firebase/analytics",
+      "@react-native-firebase/remote-config"
     ],
     "extra": {
       "router": {
