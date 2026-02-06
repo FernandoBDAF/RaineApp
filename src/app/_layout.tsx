@@ -29,7 +29,6 @@ const RootLayoutContent = () => {
   }, [user?.uid]);
 
   useEffect(() => {
-    console.log('identifyUser', user?.uid);
     if (user?.uid) {
       identifyUser(user.uid);
     }
@@ -85,10 +84,14 @@ const RootLayoutContent = () => {
       return;
     }
 
+    const segmentsList = segments as string[];
+    const inWelcomeScreen = inProfileSetupGroup && segmentsList[1] === 'welcome';
+
     if (
       isAuthenticated &&
       profileCompleted &&
-      (inOnboardingGroup || inAuthGroup || inProfileSetupGroup)
+      (inOnboardingGroup || inAuthGroup || inProfileSetupGroup) &&
+      !inWelcomeScreen
     ) {
       router.replace('/(tabs)');
     }

@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useShallow } from "zustand/react/shallow";
 import { ContinueButton } from "../../components/profile-setup/ContinueButton";
 import { SetupHeader } from "../../components/profile-setup/SetupHeader";
 import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
 import { useProfileSetupStore } from "../../store/profileSetupStore";
-import { generateBio, regenerateBio } from "../../services/bio";
+import { generateBio } from "../../services/bio";
 import { saveProfileSetup } from "../../services/profile";
 import { useAuth } from "../../features/auth/AuthContext";
 
@@ -15,6 +15,9 @@ export default function BioScreen() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [approved, setApproved] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editedBio, setEditedBio] = useState("");
 
   const payload = useProfileSetupStore(
     useShallow((state) => ({
@@ -69,26 +72,28 @@ export default function BioScreen() {
     run();
   }, [generatedBio, payload, setBio]);
 
-  const handleRegenerate = async () => {
-    setLoading(true);
-    try {
-      const bio = await regenerateBio(payload, "Not quite");
-      setBio(bio, false);
-    } finally {
-      setLoading(false);
-    }
+  const handleNotQuite = () => {
+    setEditing(true);
+    setApproved(false);
+    setEditedBio(generatedBio);
   };
 
-  const handleApprove = async () => {
+  const handleThatsMe = () => {
+    setApproved(true);
+    setEditing(false);
+  };
+
+  const handleComplete = async () => {
     if (!user) {
       return;
     }
     setSubmitting(true);
     try {
-      setBio(generatedBio, true);
-      await saveProfileSetup(user.uid, payload);
+      const finalBio = editing ? editedBio : generatedBio;
+      setBio(finalBio, true);
+      await saveProfileSetup(user.uid, { ...payload, generatedBio: finalBio, bioApproved: true });
       completeSetup();
-      router.replace("/(tabs)");
+      router.replace("/(profile-setup)/welcome");
     } finally {
       setSubmitting(false);
     }
@@ -103,33 +108,68 @@ export default function BioScreen() {
             <LoadingSpinner />
             <Text className="mt-3 text-sm text-slate-500">Generating your bio...</Text>
           </View>
+        ) : editing ? (
+          <View className="rounded-lg border border-orange-500 p-4">
+            <TextInput
+              value={editedBio}
+              onChangeText={setEditedBio}
+              multiline
+              className="text-base italic text-slate-700"
+              autoFocus
+            />
+          </View>
         ) : (
           <View className="rounded-lg border border-slate-200 p-4">
             <Text className="text-base italic text-slate-700">{generatedBio}</Text>
           </View>
         )}
 
-        <Text className="mt-6 text-sm text-slate-600">Does this sound like you?</Text>
-        <View className="mt-3 flex-row gap-3">
+        {!editing && !loading ? (
+          <>
+            <Text className="mt-6 text-center text-sm text-slate-600">
+              Does this sound like you?
+            </Text>
+            <View className="mt-3 flex-row gap-3">
+              <Pressable
+                onPress={handleNotQuite}
+                className="flex-1 rounded-lg border border-slate-300 py-3"
+              >
+                <Text className="text-center text-sm font-semibold text-slate-700">Not quite</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleThatsMe}
+                className={`flex-1 rounded-lg py-3 ${
+                  approved ? "bg-orange-500" : "border border-slate-300"
+                }`}
+              >
+                <Text
+                  className={`text-center text-sm font-semibold ${
+                    approved ? "text-white" : "text-slate-700"
+                  }`}
+                >
+                  That&apos;s me!
+                </Text>
+              </Pressable>
+            </View>
+          </>
+        ) : null}
+
+        {editing ? (
           <Pressable
-            onPress={handleRegenerate}
-            className="flex-1 rounded-lg border border-slate-300 py-3"
-            disabled={loading}
+            onPress={() => {
+              setEditing(false);
+              setApproved(true);
+              setBio(editedBio, false);
+            }}
+            className="mt-4 self-end rounded-lg bg-orange-500 px-6 py-3"
           >
-            <Text className="text-center text-sm font-semibold text-slate-700">Not quite</Text>
+            <Text className="text-center text-sm font-semibold text-white">Save changes</Text>
           </Pressable>
-          <Pressable
-            onPress={handleApprove}
-            className="flex-1 rounded-lg bg-orange-500 py-3"
-            disabled={submitting || loading}
-          >
-            <Text className="text-center text-sm font-semibold text-white">That's me!</Text>
-          </Pressable>
-        </View>
+        ) : null}
       </View>
       <ContinueButton
-        onPress={handleApprove}
-        disabled={submitting || loading}
+        onPress={handleComplete}
+        disabled={(!approved && !editing) || submitting || loading}
         label={submitting ? "SAVING..." : "COMPLETE"}
       />
     </View>

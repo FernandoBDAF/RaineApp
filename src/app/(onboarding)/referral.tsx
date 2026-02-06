@@ -1,14 +1,27 @@
-import React, { useCallback, useState } from 'react';
-import { KeyboardAvoidingView, Linking, Platform, Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CodeInput } from '../../components/ui/CodeInput';
+import { useCallback, useState } from 'react';
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  View,
+  Text
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { setJson, storageKeys } from '../../cache/mmkv';
+import { OtpInput } from '../../components/ui/OtpInput';
 import { ShakeView } from '../../components/ui/ShakeView';
 import { validateReferralCode } from '../../services/referral';
-import { setJson, storageKeys } from '../../cache/mmkv';
 import type { ReferralCode } from '../../types';
 
 const REQUEST_INVITE_EMAIL =
   'mailto:access@raineapp.com?subject=Request%20for%20Raine%20Invite&body=Hi%20Raine%20Team%2C%0A%0AI%27d%20love%20to%20join%20Raine!%0A%0AName%3A%0AEmail%3A%0ALocation%3A%0A%0ALooking%20forward%20to%20connecting!';
+
+const CODE_LENGTH = 7;
 
 export default function ReferralScreen() {
   const router = useRouter();
@@ -56,24 +69,68 @@ export default function ReferralScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-white"
-    >
-      <View className="flex-1 items-center justify-center px-6">
-        <Text className="mb-2 text-2xl font-bold text-slate-900">Raine is invite only</Text>
-        <Text className="mb-10 text-center text-slate-500">
-          Enter your invite code to continue
-        </Text>
+    <SafeAreaView className="flex-1 bg-orange-500">
+      <KeyboardAvoidingView behavior={'padding'} className="flex-1">
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={localStyles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            bounces={false}
+          >
+            {/* Top section — titles */}
+            <View className="flex-1 items-center justify-center px-8">
+              <Text className="mb-6 text-center text-lg font-bold uppercase tracking-[4px] text-white">
+                Raine is invite only.
+              </Text>
+              <Text className="text-center text-2xl italic text-white" style={localStyles.serif}>
+                No strangers.
+              </Text>
+              <Text className="text-center text-2xl italic text-white" style={localStyles.serif}>
+                Just friends of friends.
+              </Text>
+            </View>
 
-        <ShakeView trigger={shouldShake} onShakeComplete={handleShakeComplete}>
-          <CodeInput value={code} onChange={setCode} onComplete={handleCodeComplete} error={error ?? undefined} />
-        </ShakeView>
+            {/* Bottom section — input & link */}
+            <View className="items-center px-8 pb-8">
+              <ShakeView trigger={shouldShake} onShakeComplete={handleShakeComplete}>
+                <OtpInput
+                  value={code}
+                  onChange={setCode}
+                  onComplete={handleCodeComplete}
+                  length={CODE_LENGTH}
+                  keyboardType="default"
+                  autoFocus
+                  variant="dark"
+                  isUpperCase={true}
+                />
+              </ShakeView>
 
-        <Pressable onPress={() => Linking.openURL(REQUEST_INVITE_EMAIL)} className="mt-10">
-          <Text className="text-blue-600">Don&apos;t have a code? Request an invite</Text>
-        </Pressable>
-      </View>
-    </KeyboardAvoidingView>
+              {error ? (
+                <Text className="mt-4 text-center text-sm text-white/80">{error}</Text>
+              ) : null}
+
+              <View className="mt-8 items-center">
+                <Text className="text-sm text-white/70">Don&apos;t have a code?</Text>
+                <Pressable onPress={() => Linking.openURL(REQUEST_INVITE_EMAIL)} className="mt-1">
+                  <Text className="text-sm font-semibold text-white underline">
+                    Request an invite
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
+
+const localStyles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'space-between'
+  },
+  serif: {
+    fontFamily: 'serif'
+  }
+});
