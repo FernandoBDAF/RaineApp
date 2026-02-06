@@ -1,21 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { getOfferings, purchasePackage, restorePurchases } from '../services/revenuecat';
 import { useEntitlement } from '../hooks/useEntitlement';
 
+// Local type definitions to avoid importing react-native-purchases at module level
+// (the native module's EventEmitter crashes if loaded before the runtime is ready)
+interface RCPackage {
+  identifier: string;
+  product: { title: string; description: string; priceString: string };
+}
+interface RCOffering {
+  availablePackages: RCPackage[];
+}
+
 export default function SubscriptionScreen() {
   const { hasAccess, isLoading: entitlementLoading } = useEntitlement('premium');
-  const [offering, setOffering] = useState<PurchasesOffering | null>(null);
+  const [offering, setOffering] = useState<RCOffering | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
         const offerings = await getOfferings();
-        setOffering(offerings.current ?? null);
+        setOffering((offerings as any).current ?? null);
       } finally {
         setLoading(false);
       }
@@ -23,7 +32,7 @@ export default function SubscriptionScreen() {
     load();
   }, []);
 
-  const handlePurchase = async (pack: PurchasesPackage) => {
+  const handlePurchase = async (pack: RCPackage) => {
     await purchasePackage(pack);
   };
 
