@@ -1,10 +1,19 @@
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import { isFirebaseMockMode } from '../../config/environment';
+import { isFirebaseMockMode, isDev } from '../../config/environment';
 import { mockAuth } from './mock/mockAuth';
+
+/**
+ * Whether auth operations should use mock auth.
+ * In dev mode, social login always uses mock auth, so all auth operations
+ * must also use mock to stay consistent.
+ */
+function useMockAuth(): boolean {
+  return isFirebaseMockMode() || isDev;
+}
 
 // Lazy load Firebase auth to prevent crashes when not configured
 const getAuth = () => {
-  if (isFirebaseMockMode()) {
+  if (useMockAuth()) {
     return mockAuth;
   }
   // eslint-disable-next-line @typescript-eslint/no-var-requires

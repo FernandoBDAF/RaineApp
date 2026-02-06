@@ -1,5 +1,4 @@
 import { isFirebaseMockMode, config } from '../../config/environment';
-import remoteConfig from '@react-native-firebase/remote-config';
 
 const defaultFlags = {
   chatReactionsEnabled: true,
@@ -18,6 +17,8 @@ export async function initRemoteConfig() {
   }
 
   try {
+    // Lazy load to avoid native module crash when Firebase is not configured
+    const remoteConfig = require('@react-native-firebase/remote-config').default;
     const rc = remoteConfig();
     await rc.setDefaults(defaultFlags);
 

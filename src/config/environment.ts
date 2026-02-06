@@ -1,27 +1,35 @@
 /**
  * Environment configuration for the app.
  * Detects whether Firebase is properly configured and enables mock mode if not.
+ *
+ * In development (`__DEV__`), mock mode is ALWAYS enabled because:
+ * - Social login uses mock auth (Facebook SDK not configured)
+ * - The mock user has no real Firestore/Storage permissions
+ * - This keeps the full UI flow working without a real backend
  */
 
 // Check if we're in development mode
 export const isDev = __DEV__;
 
-// Firebase mock mode - enabled when Firebase config files are missing
-// This will be automatically detected at runtime
+// Firebase mock mode flag set by _layout.tsx startup check
 let _firebaseMockMode = false;
 
 export function setFirebaseMockMode(enabled: boolean) {
   _firebaseMockMode = enabled;
-  if (enabled && isDev) {
+  if ((enabled || isDev) && isDev) {
     console.warn(
       '🔶 Firebase Mock Mode Enabled - Firebase services are mocked for UI testing.\n' +
-      'To use real Firebase, add google-services.json (Android) or GoogleService-Info.plist (iOS) and rebuild.'
+      'To use real Firebase in production, add google-services.json and configure the Facebook SDK.'
     );
   }
 }
 
+/**
+ * Returns true when Firebase services should be mocked.
+ * Always true in dev mode (mock auth means no real Firestore permissions).
+ */
 export function isFirebaseMockMode() {
-  return _firebaseMockMode;
+  return _firebaseMockMode || isDev;
 }
 
 // App configuration

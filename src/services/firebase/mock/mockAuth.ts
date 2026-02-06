@@ -34,8 +34,14 @@ function notifyListeners() {
 export const mockAuth = {
   onAuthStateChanged(listener: AuthStateListener) {
     listeners.add(listener);
-    // Immediately call with current state
-    setTimeout(() => listener(currentUser), 100);
+    // Call with current state on next tick (matches Firebase behavior).
+    // Use microtask (Promise) instead of setTimeout to avoid race conditions
+    // with the real Firebase auth listener.
+    Promise.resolve().then(() => {
+      if (listeners.has(listener)) {
+        listener(currentUser);
+      }
+    });
     return () => {
       listeners.delete(listener);
     };

@@ -1,4 +1,17 @@
-import Purchases, { CustomerInfo } from 'react-native-purchases';
+// Lazy-load RevenueCat to avoid NativeEventEmitter crash at import time
+// when the native module is not fully initialized.
+// NOTE: Do NOT use `typeof import('react-native-purchases')` here — metro
+// can resolve the import at bundle time and trigger the native module load.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _Purchases: any = null;
+
+function getPurchases() {
+  if (!_Purchases) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    _Purchases = require('react-native-purchases').default;
+  }
+  return _Purchases!;
+}
 
 let revenueCatConfigured = false;
 
@@ -15,35 +28,40 @@ export async function configureRevenueCat(userId?: string) {
     revenueCatConfigured = false;
     return;
   }
-  Purchases.configure({ apiKey, appUserID: userId });
-  revenueCatConfigured = true;
+  try {
+    getPurchases().configure({ apiKey, appUserID: userId });
+    revenueCatConfigured = true;
+  } catch (error) {
+    console.warn('🔶 RevenueCat configure failed:', error);
+    revenueCatConfigured = false;
+  }
 }
 
 export async function identifyUser(userId: string) {
   if (!revenueCatConfigured) {
     warnNotConfigured('identifyUser');
-    return null as unknown as ReturnType<typeof Purchases.logIn>;
+    return null;
   }
-  return Purchases.logIn(userId);
+  return getPurchases().logIn(userId);
 }
 
 export async function getOfferings() {
   if (!revenueCatConfigured) {
     warnNotConfigured('getOfferings');
-    return { current: null, all: {} } as unknown as ReturnType<typeof Purchases.getOfferings>;
+    return { current: null, all: {} };
   }
-  return Purchases.getOfferings();
+  return getPurchases().getOfferings();
 }
 
-export async function purchasePackage(pack: Parameters<typeof Purchases.purchasePackage>[0]) {
+export async function purchasePackage(pack: any) {
   if (!revenueCatConfigured) {
     warnNotConfigured('purchasePackage');
-    return null as unknown as ReturnType<typeof Purchases.purchasePackage>;
+    return null;
   }
-  return Purchases.purchasePackage(pack);
+  return getPurchases().purchasePackage(pack);
 }
 
-export async function getCustomerInfo(): Promise<CustomerInfo> {
+export async function getCustomerInfo() {
   if (!revenueCatConfigured) {
     warnNotConfigured('getCustomerInfo');
     return {
@@ -59,15 +77,15 @@ export async function getCustomerInfo(): Promise<CustomerInfo> {
       originalPurchaseDate: null,
       managementURL: null,
       nonSubscriptionTransactions: []
-    } as unknown as CustomerInfo;
+    };
   }
-  return Purchases.getCustomerInfo();
+  return getPurchases().getCustomerInfo();
 }
 
 export async function restorePurchases() {
   if (!revenueCatConfigured) {
     warnNotConfigured('restorePurchases');
-    return null as unknown as ReturnType<typeof Purchases.restorePurchases>;
+    return null;
   }
-  return Purchases.restorePurchases();
+  return getPurchases().restorePurchases();
 }

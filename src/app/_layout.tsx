@@ -12,6 +12,10 @@ import { useProfileSetupStore } from '../store/profileSetupStore';
 import { STEP_TO_ROUTE } from '../constants/profile-options';
 import { setFirebaseMockMode, isDev } from '../config/environment';
 
+// Keep the native splash screen visible until we decide where to navigate.
+// This MUST run at module level (before any component renders) to avoid a flash.
+SplashScreen.preventAutoHideAsync();
+
 const RootLayoutContent = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
@@ -51,10 +55,6 @@ const RootLayoutContent = () => {
 
     return unsubscribe;
   }, [router]);
-
-  useEffect(() => {
-    SplashScreen.preventAutoHideAsync();
-  }, []);
 
   useEffect(() => {
     if (isLoading) {

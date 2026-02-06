@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import Purchases, { CustomerInfo } from 'react-native-purchases';
 import { getCustomerInfo } from '../services/revenuecat';
 
 export function useEntitlement(entitlementId: string) {
-  const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
+  const [customerInfo, setCustomerInfo] = useState<Record<string, any> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -13,7 +12,7 @@ export function useEntitlement(entitlementId: string) {
       try {
         const info = await getCustomerInfo();
         if (isMounted) {
-          setCustomerInfo(info);
+          setCustomerInfo(info as Record<string, any>);
         }
       } finally {
         if (isMounted) {
@@ -23,20 +22,32 @@ export function useEntitlement(entitlementId: string) {
     };
 
     load();
-    const listener = (info: CustomerInfo) => {
-      if (isMounted) {
-        setCustomerInfo(info);
-      }
-    };
-    Purchases.addCustomerInfoUpdateListener(listener);
+
+    // Lazy-load Purchases listener to avoid NativeEventEmitter crash at import time
+    let removeListener: (() => void) | undefined;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const Purchases = require('react-native-purchases').default;
+      const listener = (info: Record<string, any>) => {
+        if (isMounted) {
+          setCustomerInfo(info);
+        }
+      };
+      Purchases.addCustomerInfoUpdateListener(listener);
+      removeListener = () => Purchases.removeCustomerInfoUpdateListener(listener);
+    } catch {
+      // RevenueCat not available, skip listener
+    }
 
     return () => {
       isMounted = false;
-      Purchases.removeCustomerInfoUpdateListener(listener);
+      removeListener?.();
     };
   }, []);
 
-  const hasAccess = Boolean(customerInfo?.entitlements.active[entitlementId]);
+  const hasAccess = Boolean(
+    customerInfo && (customerInfo as any)?.entitlements?.active?.[entitlementId]
+  );
 
   return { hasAccess, isLoading, customerInfo };
 }
