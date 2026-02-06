@@ -9,6 +9,7 @@ import { initRemoteConfig } from '../services/firebase/remoteConfig';
 import { configureRevenueCat, identifyUser } from '../services/revenuecat';
 import { getInitialNotification, onNotificationOpened } from '../services/firebase/notifications';
 import { useProfileSetupStore } from '../store/profileSetupStore';
+import { STEP_TO_ROUTE } from '../constants/profile-options';
 import { setFirebaseMockMode, isDev } from '../config/environment';
 
 const RootLayoutContent = () => {
@@ -16,6 +17,7 @@ const RootLayoutContent = () => {
   const router = useRouter();
   const segments = useSegments();
   const profileCompleted = useProfileSetupStore((state) => state.completed);
+  const currentStep = useProfileSetupStore((state) => state.currentStep);
   const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
@@ -27,6 +29,7 @@ const RootLayoutContent = () => {
   }, [user?.uid]);
 
   useEffect(() => {
+    console.log('identifyUser', user?.uid);
     if (user?.uid) {
       identifyUser(user.uid);
     }
@@ -77,14 +80,19 @@ const RootLayoutContent = () => {
     }
 
     if (isAuthenticated && !profileCompleted && !inProfileSetupGroup) {
-      router.replace('/(profile-setup)/name');
+      const route = STEP_TO_ROUTE[currentStep] || '/(profile-setup)/name';
+      router.replace(route as any);
       return;
     }
 
-    if (isAuthenticated && profileCompleted && (inOnboardingGroup || inAuthGroup || inProfileSetupGroup)) {
+    if (
+      isAuthenticated &&
+      profileCompleted &&
+      (inOnboardingGroup || inAuthGroup || inProfileSetupGroup)
+    ) {
       router.replace('/(tabs)');
     }
-  }, [appReady, isAuthenticated, profileCompleted, router, segments]);
+  }, [appReady, currentStep, isAuthenticated, profileCompleted, router, segments]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
@@ -108,13 +116,13 @@ export default function RootLayout() {
         // Try to import Firebase app
         const firebase = await import('@react-native-firebase/app');
         const apps = firebase.default.apps;
-        
+
         if (apps.length === 0) {
           // Firebase not configured, enable mock mode
           if (isDev) {
             console.warn(
               '🔶 Firebase Mock Mode: No Firebase configuration found.\n' +
-              '   Add google-services.json (Android) or GoogleService-Info.plist (iOS) for real Firebase.'
+                '   Add google-services.json (Android) or GoogleService-Info.plist (iOS) for real Firebase.'
             );
           }
           setFirebaseMockMode(true);

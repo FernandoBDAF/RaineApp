@@ -24,6 +24,7 @@ interface ProfileSetupStore extends ProfileSetupData {
   setWhatBroughtYou: (whatBroughtYou: ProfileSetupData["whatBroughtYou"]) => void;
   setBio: (generatedBio: string, bioApproved: boolean) => void;
   setCurrentStep: (currentStep: number) => void;
+  decrementStep: () => void;
   completeSetup: () => void;
   reset: () => void;
 }
@@ -75,6 +76,8 @@ export const useProfileSetupStore = create<ProfileSetupStore>()(
       setWhatBroughtYou: (whatBroughtYou) => set({ whatBroughtYou }),
       setBio: (generatedBio, bioApproved) => set({ generatedBio, bioApproved }),
       setCurrentStep: (currentStep) => set({ currentStep }),
+      decrementStep: () =>
+        set((state) => ({ currentStep: Math.max(1, state.currentStep - 1) })),
       completeSetup: () => set({ completed: true }),
       reset: () => set(initialState)
     }),

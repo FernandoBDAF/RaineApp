@@ -92,3 +92,20 @@ export const APPROVED_COUNTIES = [
 ] as const;
 
 export const TOTAL_STEPS = 14;
+
+export const STEP_TO_ROUTE: Record<number, string> = {
+  1: "/(profile-setup)/name",
+  2: "/(profile-setup)/photo",
+  3: "/(profile-setup)/location",
+  4: "/(profile-setup)/city-feel",
+  5: "/(profile-setup)/children",
+  6: "/(profile-setup)/before-motherhood",
+  7: "/(profile-setup)/perfect-weekend",
+  8: "/(profile-setup)/feel-yourself",
+  9: "/(profile-setup)/hard-truth",
+  10: "/(profile-setup)/unexpected-joys",
+  11: "/(profile-setup)/aesthetic",
+  12: "/(profile-setup)/mom-friends",
+  13: "/(profile-setup)/what-brought-you",
+  14: "/(profile-setup)/bio",
+};

@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
-import { Text, View } from 'react-native';
+import { Image, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getJson, storageKeys } from '../../cache/mmkv';
 import type { ReferralCode } from '../../types';
+
+import splashImage from '../../../assets/splash-screen.png';
 
 const SPLASH_DURATION_MS = 4000;
 
@@ -23,8 +25,8 @@ export default function SplashScreen() {
   }, [router]);
 
   return (
-    <View className="flex-1 items-center justify-center bg-slate-800">
-      <Text className="text-5xl font-bold text-white">Raine</Text>
+    <View className="flex-1 items-center justify-center bg-white">
+      <Image source={splashImage} className="w-64 h-64" resizeMode="contain" />
     </View>
   );
 }
