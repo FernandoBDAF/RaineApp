@@ -1,4 +1,4 @@
-# Troubleshooting Guide - RaineApp-fb
+# Troubleshooting Guide - RaineApp
 
 This document details the problems encountered during development and their solutions for future reference.
 
@@ -14,6 +14,12 @@ This document details the problems encountered during development and their solu
 6. [NativeWind/Tailwind Styles Not Applying](#6-nativewindtailwind-styles-not-applying)
 7. [Metro Port Conflicts](#7-metro-port-conflicts)
 8. [EAS CLI Not Found](#8-eas-cli-not-found)
+9. [Zustand getSnapshot Infinite Loop](#9-zustand-getsnapshot-infinite-loop)
+10. [Firebase App Not Initialized (Mock Mode)](#10-firebase-app-not-initialized-mock-mode)
+11. [RevenueCat Not Configured](#11-revenuecat-not-configured)
+12. [Android SDK Not Found](#12-android-sdk-not-found)
+13. [Xcode Requires Newer macOS](#13-xcode-requires-newer-macos)
+14. [Expo .expo Files Tracked by Git](#14-expo-expo-files-tracked-by-git)
 
 ---
 
@@ -337,6 +343,142 @@ export PATH="$HOME/.yarn/bin:$PATH"
 **Option 3:** Use full path
 ```bash
 ~/.yarn/bin/eas build --profile development --platform android
+```
+
+---
+
+## 9. Zustand getSnapshot Infinite Loop
+
+### Problem
+```
+ERROR  The result of getSnapshot should be cached to avoid an infinite loop
+ERROR  Maximum update depth exceeded
+```
+
+### Cause
+Zustand selector returned a **new object each render**, which invalidated subscriptions and retriggered effects.
+
+### Solution
+Use `useShallow` to memoize the selector:
+```typescript
+import { useShallow } from 'zustand/react/shallow';
+
+const payload = useProfileSetupStore(
+  useShallow((state) => ({
+    firstName: state.firstName,
+    lastInitial: state.lastInitial,
+    // ...
+  }))
+);
+```
+
+---
+
+## 10. Firebase App Not Initialized (Mock Mode)
+
+### Problem
+```
+Error: No Firebase App '[DEFAULT]' has been created - call firebase.initializeApp()
+```
+
+### Cause
+Firebase config files were missing and code tried to call Firestore/Functions anyway.
+
+### Solution
+Guard Firebase calls when mock mode is enabled:
+```typescript
+import { isFirebaseMockMode } from '../config/environment';
+
+export async function saveProfileSetup(...) {
+  if (isFirebaseMockMode()) {
+    return;
+  }
+  return firestore().collection('users').doc(uid).update(...);
+}
+```
+
+---
+
+## 11. RevenueCat Not Configured
+
+### Problem
+```
+Error: There is no singleton instance. Make sure you configure Purchases...
+```
+
+### Cause
+`Purchases.getOfferings()` and friends were called before `Purchases.configure`.
+
+### Solution
+Add a configuration guard:
+```typescript
+let revenueCatConfigured = false;
+
+export async function configureRevenueCat(...) {
+  const apiKey = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY ?? '';
+  if (!apiKey) return;
+  Purchases.configure({ apiKey, appUserID: userId });
+  revenueCatConfigured = true;
+}
+
+export async function getOfferings() {
+  if (!revenueCatConfigured) {
+    return { current: null, all: {} };
+  }
+  return Purchases.getOfferings();
+}
+```
+
+---
+
+## 12. Android SDK Not Found
+
+### Problem
+```
+Failed to resolve the Android SDK path. Default install location not found.
+Error: spawn adb ENOENT
+```
+
+### Cause
+Android Studio / SDK not installed or `ANDROID_HOME` not set.
+
+### Solution
+1. Install Android Studio and SDK.
+2. Add to `~/.zshrc`:
+```bash
+export ANDROID_HOME=$HOME/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+```
+3. Restart terminal:
+```bash
+source ~/.zshrc
+```
+
+---
+
+## 13. Xcode Requires Newer macOS
+
+### Problem
+Xcode requires macOS 15.6+ but the machine is on macOS 14.
+
+### Solutions
+- Use **EAS cloud build** with a physical iPhone (no Xcode required).
+- Use **Android emulator** instead of iOS.
+- Upgrade macOS if possible.
+
+---
+
+## 14. Expo .expo Files Tracked by Git
+
+### Problem
+`.expo/devices.json` and other `.expo` files tracked by git.
+
+### Solution
+1. Ensure `.expo/` is ignored in `.gitignore`.
+2. Remove tracked files:
+```bash
+git rm --cached .expo/devices.json
 ```
 
 ---
