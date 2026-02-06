@@ -15,9 +15,9 @@ export default function ChildrenScreen() {
     useProfileSetupStore();
 
   const canContinue = useMemo(() => {
-    if (childCount <= 0) {
-      return false;
-    }
+    // if (childCount <= 0) {
+    //   return false;
+    // }
     if (isExpecting && (!dueDate?.month || !dueDate?.year)) {
       return false;
     }
