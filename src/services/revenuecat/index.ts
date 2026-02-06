@@ -59,7 +59,7 @@ export async function getCustomerInfo(): Promise<CustomerInfo> {
       originalPurchaseDate: null,
       managementURL: null,
       nonSubscriptionTransactions: []
-    } as CustomerInfo;
+    } as unknown as CustomerInfo;
   }
   return Purchases.getCustomerInfo();
 }

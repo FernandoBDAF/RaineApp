@@ -103,7 +103,12 @@ const RootLayoutContent = () => {
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(profile-setup)" />
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="profile" />
       <Stack.Screen name="room/[id]" />
+      <Stack.Screen name="drop/[id]" />
+      <Stack.Screen name="introduction/[userId]" options={{ presentation: "modal" }} />
+      <Stack.Screen name="introduction/pending" />
+      <Stack.Screen name="community/[id]" />
       <Stack.Screen name="subscription" />
     </Stack>
   );
