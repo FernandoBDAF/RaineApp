@@ -44,24 +44,15 @@
       "expo-dev-client",
       "@react-native-firebase/app",
       "@react-native-firebase/crashlytics"
-      "expo-dev-client",
-      "@react-native-firebase/app",
-      "@react-native-firebase/auth",
-      "@react-native-firebase/firestore",
-      "@react-native-firebase/functions",
-      "@react-native-firebase/storage",
-      "@react-native-firebase/messaging",
-      "@react-native-firebase/crashlytics",
-      "@react-native-firebase/analytics",
-      "@react-native-firebase/remote-config"
     ],
     "extra": {
       "router": {
         "root": "src/app"
       },
       "eas": {
-        "projectId": "90743f25-a1d2-4070-8d97-7716eb395973"
+        "projectId": "4df1738a-f338-4b36-9bd2-1370bd095e15"
       }
-    }
+    },
+    "owner": "fernandobdaf"
   }
 }
