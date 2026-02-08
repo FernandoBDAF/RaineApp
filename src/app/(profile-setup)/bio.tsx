@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
-import { useRouter } from "expo-router";
-import { useShallow } from "zustand/react/shallow";
-import { ContinueButton } from "../../components/profile-setup/ContinueButton";
-import { SetupHeader } from "../../components/profile-setup/SetupHeader";
-import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
-import { useProfileSetupStore } from "../../store/profileSetupStore";
-import { generateBio } from "../../services/bio";
-import { saveProfileSetup } from "../../services/profile";
-import { useAuth } from "../../features/auth/AuthContext";
+import React, { useEffect, useState } from 'react';
+import { Pressable, Text, TextInput, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useShallow } from 'zustand/react/shallow';
+import { ContinueButton } from '../../components/profile-setup/ContinueButton';
+import { SetupHeader } from '../../components/profile-setup/SetupHeader';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { useProfileSetupStore } from '../../store/profileSetupStore';
+import { generateBio } from '../../services/bio';
+import { saveProfileSetup } from '../../services/profile';
+import { useAuth } from '../../features/auth/AuthContext';
 
 export default function BioScreen() {
   const router = useRouter();
@@ -17,34 +17,34 @@ export default function BioScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [approved, setApproved] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [editedBio, setEditedBio] = useState("");
+  const [editedBio, setEditedBio] = useState('');
 
   const payload = useProfileSetupStore(
     useShallow((state) => ({
-    firstName: state.firstName,
-    lastInitial: state.lastInitial,
-    photoURL: state.photoURL,
-    zipCode: state.zipCode,
-    city: state.city,
-    state: state.state,
-    county: state.county,
-    cityFeel: state.cityFeel,
-    childCount: state.childCount,
-    isExpecting: state.isExpecting,
-    dueDate: state.dueDate,
-    children: state.children,
-    beforeMotherhood: state.beforeMotherhood,
-    perfectWeekend: state.perfectWeekend,
-    feelYourself: state.feelYourself,
-    hardTruths: state.hardTruths,
-    unexpectedJoys: state.unexpectedJoys,
-    aesthetic: state.aesthetic,
-    momFriendStyle: state.momFriendStyle,
-    whatBroughtYou: state.whatBroughtYou,
-    generatedBio: state.generatedBio,
-    bioApproved: state.bioApproved,
-    currentStep: state.currentStep,
-    completed: state.completed
+      firstName: state.firstName,
+      lastInitial: state.lastInitial,
+      photoURL: state.photoURL,
+      zipCode: state.zipCode,
+      city: state.city,
+      state: state.state,
+      county: state.county,
+      cityFeel: state.cityFeel,
+      childCount: state.childCount,
+      isExpecting: state.isExpecting,
+      dueDate: state.dueDate,
+      children: state.children,
+      beforeMotherhood: state.beforeMotherhood,
+      perfectWeekend: state.perfectWeekend,
+      feelYourself: state.feelYourself,
+      hardTruths: state.hardTruths,
+      unexpectedJoys: state.unexpectedJoys,
+      aesthetic: state.aesthetic,
+      momFriendStyle: state.momFriendStyle,
+      whatBroughtYou: state.whatBroughtYou,
+      generatedBio: state.generatedBio,
+      bioApproved: state.bioApproved,
+      currentStep: state.currentStep,
+      completed: state.completed
     }))
   );
   const setBio = useProfileSetupStore((state) => state.setBio);
@@ -93,7 +93,7 @@ export default function BioScreen() {
       setBio(finalBio, true);
       await saveProfileSetup(user.uid, { ...payload, generatedBio: finalBio, bioApproved: true });
       completeSetup();
-      router.replace("/(profile-setup)/welcome");
+      router.replace('/welcome/welcome');
     } finally {
       setSubmitting(false);
     }
@@ -139,12 +139,12 @@ export default function BioScreen() {
               <Pressable
                 onPress={handleThatsMe}
                 className={`flex-1 rounded-lg py-3 ${
-                  approved ? "bg-orange-500" : "border border-slate-300"
+                  approved ? 'bg-orange-500' : 'border border-slate-300'
                 }`}
               >
                 <Text
                   className={`text-center text-sm font-semibold ${
-                    approved ? "text-white" : "text-slate-700"
+                    approved ? 'text-white' : 'text-slate-700'
                   }`}
                 >
                   That&apos;s me!
@@ -170,7 +170,7 @@ export default function BioScreen() {
       <ContinueButton
         onPress={handleComplete}
         disabled={(!approved && !editing) || submitting || loading}
-        label={submitting ? "SAVING..." : "COMPLETE"}
+        label={submitting ? 'SAVING...' : 'COMPLETE'}
       />
     </View>
   );
