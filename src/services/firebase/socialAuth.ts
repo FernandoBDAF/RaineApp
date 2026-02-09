@@ -1,5 +1,5 @@
 import type { SocialProvider } from '../../types';
-import { isFirebaseMockMode } from '../../config/environment';
+import { isFirebaseMockMode, isDev } from '../../config/environment';
 
 export interface SocialAuthResult {
   success: boolean;
@@ -7,17 +7,36 @@ export interface SocialAuthResult {
   provider: SocialProvider;
 }
 
+/**
+ * Fall back to mock auth when real social login is not available.
+ */
+async function mockSocialLogin(provider: SocialProvider): Promise<SocialAuthResult> {
+  if (isDev) {
+    console.log(`🔶 [Mock] ${provider} sign in`);
+  }
+  const { loginAsMockUser } = await import('./mock/mockAuth');
+  loginAsMockUser();
+  return { success: true, provider };
+}
+
+/**
+ * Whether we should use the real Facebook SDK for social login.
+ * Returns true ONLY in production when Firebase mock mode is off.
+ * In development, we always use mock auth to avoid native SDK crashes
+ * from unconfigured Facebook App ID.
+ */
+function shouldUseRealFacebookSdk(): boolean {
+  if (isDev) return false;
+  if (isFirebaseMockMode()) return false;
+  return true;
+}
+
 export async function signInWithFacebook(): Promise<SocialAuthResult> {
-  if (isFirebaseMockMode()) {
-    console.log('🔶 [Mock] Facebook sign in');
-    // Import mock auth and trigger login
-    const { loginAsMockUser } = await import('./mock/mockAuth');
-    loginAsMockUser();
-    return { success: true, provider: 'facebook' };
+  if (!shouldUseRealFacebookSdk()) {
+    return mockSocialLogin('facebook');
   }
 
   try {
-    // Lazy load Facebook SDK and Firebase Auth
     const { AccessToken, LoginManager } = await import('react-native-fbsdk-next');
     const auth = (await import('@react-native-firebase/auth')).default;
 
@@ -47,12 +66,17 @@ export async function signInWithInstagram(): Promise<SocialAuthResult> {
 }
 
 export async function signInWithLinkedIn(): Promise<SocialAuthResult> {
+  if (!shouldUseRealFacebookSdk()) {
+    return mockSocialLogin('linkedin');
+  }
   return { success: false, error: 'LinkedIn sign in not yet implemented', provider: 'linkedin' };
 }
 
 export async function socialSignOut(): Promise<void> {
-  if (isFirebaseMockMode()) {
-    console.log('🔶 [Mock] Social sign out');
+  if (!shouldUseRealFacebookSdk()) {
+    if (isDev) {
+      console.log('🔶 [Mock] Social sign out');
+    }
     const { setMockUser } = await import('./mock/mockAuth');
     setMockUser(null);
     return;
