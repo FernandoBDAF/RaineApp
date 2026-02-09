@@ -85,13 +85,17 @@ const RootLayoutContent = () => {
     }
 
     const segmentsList = segments as string[];
-    const inWelcomeScreen = inProfileSetupGroup && segmentsList[1] === 'welcome';
+    const nextIsWelcomeScreen = profileCompleted && segmentsList[1] === 'bio';
+
+    if (nextIsWelcomeScreen) {
+      router.replace('/welcome/welcome');
+      return;
+    }
 
     if (
       isAuthenticated &&
       profileCompleted &&
-      (inOnboardingGroup || inAuthGroup || inProfileSetupGroup) &&
-      !inWelcomeScreen
+      (inOnboardingGroup || inAuthGroup || inProfileSetupGroup)
     ) {
       router.replace('/(tabs)');
     }
@@ -106,7 +110,7 @@ const RootLayoutContent = () => {
       <Stack.Screen name="profile" />
       <Stack.Screen name="room/[id]" />
       <Stack.Screen name="drop/[id]" />
-      <Stack.Screen name="introduction/[userId]" options={{ presentation: "modal" }} />
+      <Stack.Screen name="introduction/[userId]" options={{ presentation: 'modal' }} />
       <Stack.Screen name="introduction/pending" />
       <Stack.Screen name="community/[id]" />
       <Stack.Screen name="subscription" />
