@@ -50,3 +50,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Development working docs (not tracked in version control)
+/development/
+
+# Archived implementation history (local reference only)
+/implementation-history/
