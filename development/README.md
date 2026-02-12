@@ -18,6 +18,9 @@ This directory contains all development plans, guides, and documentation for the
 | 4 | [Local Development Infrastructure](./4-local-development-infrastructure.md) | Reference | Development setup and emulators |
 | 5 | [Troubleshooting Guide](./5-troubleshooting-guide.md) | Active | Solutions to common issues |
 | 6 | [Authentication Implementation](./6-authentication-implementation-plan.md) | Reference | Auth system details |
+| 7 | [Android Startup Crash Study](./7-android-startup-crash-study.md) | Reference | MainActivity crash investigation |
+| 8 | [Dev Build & Runtime Fixes](./8-dev-build-runtime-fixes.md) | Reference | Android build & runtime session study |
+| 9 | [iOS Build Configuration Fixes](./9-ios-build-configuration-fixes.md) | Reference | iOS build with Firebase + Expo session study |
 
 ---
 
