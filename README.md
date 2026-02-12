@@ -343,7 +343,7 @@ RaineApp/
 │   ├── store/                    # Zustand stores (app, profile-setup)
 │   └── types/                    # TypeScript type definitions
 ├── assets/                       # Images, icons, splash screen
-├── development/                  # Study documents and debugging guides
+├── development/                  # Working docs (gitignored, local only)
 ├── documents/                    # Implementation plans
 ├── app.json                      # Expo configuration
 ├── eas.json                      # EAS Build profiles
@@ -492,8 +492,9 @@ Config files: `tailwind.config.js`, `metro.config.js`, `global.css`, `nativewind
 | Sign-out crash | Auth service is using real Firebase instead of mock. Check `isDev` guard |
 
 **Detailed guides:**
-- [Android startup crash study](./development/7-android-startup-crash-study.md)
-- [Dev build & runtime fixes](./development/8-dev-build-runtime-fixes.md)
+- [System Invariants](./documents/TECHNICAL/9-SYSTEM-INVARIANTS.md)
+- [Troubleshooting Guide](./documents/GUIDES/TROUBLESHOOTING.md)
+- [Full Documentation Index](./documents/README.md)
 
 ---
 
