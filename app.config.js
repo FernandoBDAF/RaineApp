@@ -1,0 +1,57 @@
+/** @type {import('expo/config').ExpoConfig} */
+module.exports = {
+  name: "Raine",
+  slug: "raine",
+  version: "1.0.0",
+  orientation: "portrait",
+  icon: "./assets/icon.png",
+  userInterfaceStyle: "light",
+  newArchEnabled: true,
+  splash: {
+    image: "./assets/splash-screen.png",
+    resizeMode: "contain",
+    backgroundColor: "#ffffff",
+  },
+  scheme: "raine",
+  ios: {
+    bundleIdentifier: "com.raine.app",
+    supportsTablet: true,
+    googleServicesFile: "./GoogleService-Info.plist",
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+    },
+  },
+  android: {
+    package: "com.raine.app",
+    googleServicesFile: "./google-services.json",
+    adaptiveIcon: {
+      foregroundImage: "./assets/adaptive-icon.png",
+      backgroundColor: "#ffffff",
+    },
+    edgeToEdgeEnabled: true,
+    predictiveBackGestureEnabled: false,
+  },
+  web: {
+    favicon: "./assets/favicon.png",
+  },
+  plugins: [
+    [
+      "expo-router",
+      {
+        root: "src/app",
+      },
+    ],
+    "expo-dev-client",
+    "@react-native-firebase/app",
+    "@react-native-firebase/crashlytics",
+  ],
+  extra: {
+    router: {
+      root: "src/app",
+    },
+    eas: {
+      projectId: "4df1738a-f338-4b36-9bd2-1370bd095e15",
+    },
+  },
+  owner: "fernandobdaf",
+};

@@ -7,8 +7,11 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "RCT_NEW_ARCH_ENABLED": "1"
+      },
       "ios": {
-        "simulator": false
+        "simulator": true
       },
       "android": {
         "buildType": "apk"
@@ -17,12 +20,18 @@
     "development-simulator": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "RCT_NEW_ARCH_ENABLED": "1"
+      },
       "ios": {
         "simulator": true
       }
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "RCT_NEW_ARCH_ENABLED": "1"
+      },
       "ios": {
         "simulator": false
       },
@@ -32,6 +41,9 @@
     },
     "production": {
       "autoIncrement": true,
+      "env": {
+        "RCT_NEW_ARCH_ENABLED": "1"
+      },
       "ios": {
         "simulator": false
       },
