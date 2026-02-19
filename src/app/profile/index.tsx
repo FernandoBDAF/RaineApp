@@ -1,9 +1,11 @@
-import React from "react";
-import { Image, Pressable, ScrollView, Text, View } from "react-native";
-import { useRouter } from "expo-router";
-import { useAuth } from "../../features/auth/AuthContext";
-import { useProfileSetupStore } from "../../store/profileSetupStore";
-import { ProfileTagList } from "../../components/profile/ProfileTagList";
+import React from 'react';
+import { Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useAuth } from '../../context/auth/AuthContext';
+import { useProfileSetupStore } from '../../store/profileSetupStore';
+import { ProfileTagList } from '../../components/profile/ProfileTagList';
+import { storage } from '../../cache/mmkv';
+import { useAppStore } from '../../store/appStore';
 
 function getChildAge(birthMonth: number, birthYear: number): string {
   const now = new Date();
@@ -15,9 +17,9 @@ function getChildAge(birthMonth: number, birthYear: number): string {
     years -= 1;
     months += 12;
   }
-  if (years <= 0 && months <= 0) return "Newborn";
+  if (years <= 0 && months <= 0) return 'Newborn';
   if (years < 1) return `${months}mo`;
-  if (years === 1 && months === 0) return "1 year";
+  if (years === 1 && months === 0) return '1 year';
   if (months === 0) return `${years} years`;
   return `${years}y ${months}mo`;
 }
@@ -40,11 +42,37 @@ export default function ProfileScreen() {
   const aesthetic = useProfileSetupStore((s) => s.aesthetic);
   const momFriendStyle = useProfileSetupStore((s) => s.momFriendStyle);
 
+  const setNotificationsEnabled = useAppStore((s) => s.setNotificationsEnabled);
+  const setActiveRoomId = useAppStore((s) => s.setActiveRoomId);
+  const setTheme = useAppStore((s) => s.setTheme);
+  const resetProfileSetup = useProfileSetupStore((s) => s.reset);
+
   const displayName = `${firstName} ${lastInitial}.`;
   const displayPhoto = photoURL || user?.photoURL;
 
   const handleSignOut = async () => {
     await logout();
+  };
+
+  const handleResetApp = () => {
+    Alert.alert(
+      'Reset app data?',
+      'This clears local cache and profile setup progress on this device.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: () => {
+            storage.clearAll();
+            resetProfileSetup();
+            setActiveRoomId(null);
+            setTheme('system');
+            setNotificationsEnabled(true);
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -55,10 +83,7 @@ export default function ProfileScreen() {
           <Text className="text-2xl text-slate-700">←</Text>
         </Pressable>
         <Text className="text-base font-semibold text-slate-800">Profile</Text>
-        <Pressable
-          onPress={() => router.push("/profile/edit")}
-          className="active:opacity-70"
-        >
+        <Pressable onPress={() => router.push('/profile/edit')} className="active:opacity-70">
           <Text className="text-sm font-semibold text-orange-500">Edit</Text>
         </Pressable>
       </View>
@@ -66,10 +91,7 @@ export default function ProfileScreen() {
       {/* Profile Photo */}
       <View className="items-center py-6">
         {displayPhoto ? (
-          <Image
-            source={{ uri: displayPhoto }}
-            className="h-36 w-36 rounded-full bg-slate-100"
-          />
+          <Image source={{ uri: displayPhoto }} className="h-36 w-36 rounded-full bg-slate-100" />
         ) : (
           <View className="h-36 w-36 items-center justify-center rounded-full bg-slate-100">
             <Text className="text-5xl">👤</Text>
@@ -78,9 +100,7 @@ export default function ProfileScreen() {
       </View>
 
       {/* Name */}
-      <Text className="text-center text-2xl font-bold text-slate-900">
-        {displayName}
-      </Text>
+      <Text className="text-center text-2xl font-bold text-slate-900">{displayName}</Text>
 
       {/* Location */}
       {city && state ? (
@@ -112,9 +132,7 @@ export default function ProfileScreen() {
           </Text>
           {children.map((child, index) => (
             <View key={index} className="flex-row items-center justify-between py-1">
-              <Text className="text-base text-slate-700">
-                {child.name || `Child ${index + 1}`}
-              </Text>
+              <Text className="text-base text-slate-700">{child.name || `Child ${index + 1}`}</Text>
               <Text className="text-sm text-slate-400">
                 {getChildAge(child.birthMonth, child.birthYear)}
               </Text>
@@ -134,7 +152,7 @@ export default function ProfileScreen() {
       {/* Buttons */}
       <View className="mt-8 gap-3 px-6">
         <Pressable
-          onPress={() => router.push("/profile/edit")}
+          onPress={() => router.push('/profile/edit')}
           className="items-center rounded-full bg-slate-100 py-3.5 active:bg-slate-200"
         >
           <Text className="text-sm font-semibold text-slate-700">Settings</Text>
@@ -144,6 +162,13 @@ export default function ProfileScreen() {
           className="items-center rounded-full bg-red-50 py-3.5 active:bg-red-100"
         >
           <Text className="text-sm font-semibold text-red-500">Sign Out</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={handleResetApp}
+          className="items-center rounded-full bg-red-50 py-3.5 active:bg-red-100"
+        >
+          <Text className="text-sm font-semibold text-red-500">Reset APP Data</Text>
         </Pressable>
       </View>
 

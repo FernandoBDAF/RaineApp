@@ -19,7 +19,7 @@ export function setFirebaseMockMode(enabled: boolean) {
   if ((enabled || isDev) && isDev) {
     console.warn(
       '🔶 Firebase Mock Mode Enabled - Firebase services are mocked for UI testing.\n' +
-      'To use real Firebase in production, add google-services.json and configure the Facebook SDK.'
+        'To use real Firebase in production, add google-services.json and configure the Facebook SDK.'
     );
   }
 }
@@ -29,23 +29,23 @@ export function setFirebaseMockMode(enabled: boolean) {
  * Always true in dev mode (mock auth means no real Firestore permissions).
  */
 export function isFirebaseMockMode() {
-  return _firebaseMockMode || isDev;
+  return _firebaseMockMode || config.firebase.forceMockMode;
 }
 
 // App configuration
 export const config = {
   app: {
     name: 'Raine',
-    bundleId: 'com.raine.app',
+    bundleId: 'com.raine.app'
   },
   firebase: {
     // Set to true to force mock mode even with config files present
-    forceMockMode: false,
+    forceMockMode: false
   },
   features: {
     // Default feature flags (used when Remote Config is unavailable)
     chatReactionsEnabled: true,
     newProfileUIEnabled: false,
-    subscriptionGatingEnabled: false, // Disabled in mock mode
-  },
+    subscriptionGatingEnabled: false // Disabled in mock mode
+  }
 } as const;

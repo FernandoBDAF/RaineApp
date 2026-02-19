@@ -7,7 +7,7 @@ import { PhotoUpload } from "../../components/profile-setup/PhotoUpload";
 import { SetupHeader } from "../../components/profile-setup/SetupHeader";
 import { useProfileSetupStore } from "../../store/profileSetupStore";
 import { uploadProfilePhoto } from "../../services/profile";
-import { useAuth } from "../../features/auth/AuthContext";
+import { useAuth } from "../../context/auth/AuthContext";
 
 export default function PhotoScreen() {
   const router = useRouter();

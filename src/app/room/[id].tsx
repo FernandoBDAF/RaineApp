@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import type { Message } from '../../types';
-import { useAuth } from '../../features/auth/AuthContext';
+import { useAuth } from '../../context/auth/AuthContext';
 import { isFirebaseMockMode } from '../../config/environment';
 import { listenToMessages, fetchMoreMessages, sendMessage, updateReactions } from '../../services/firebase/messages';
 import { MessageList } from '../../components/chat/MessageList';

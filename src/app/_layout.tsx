@@ -3,7 +3,7 @@ import '../../global.css';
 import { SplashScreen, Stack, useRouter, useSegments } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider, useAuth } from '../features/auth/AuthContext';
+import { AuthProvider, useAuth } from '../context/auth/AuthContext';
 import { queryClient } from '../services/queryClient';
 import { initRemoteConfig } from '../services/firebase/remoteConfig';
 import { configureRevenueCat, identifyUser } from '../services/revenuecat';
@@ -76,7 +76,7 @@ const RootLayoutContent = () => {
     if (!isAuthenticated && !inOnboardingGroup && !inAuthGroup) {
       router.replace('/(onboarding)/splash');
       return;
-    }
+    }    
 
     if (isAuthenticated && !profileCompleted && !inProfileSetupGroup) {
       const route = STEP_TO_ROUTE[currentStep] || '/(profile-setup)/name';

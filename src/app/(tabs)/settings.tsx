@@ -3,7 +3,7 @@ import { Alert, Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '../../components/ui/Button';
 import { storage } from '../../cache/mmkv';
-import { useAuth } from '../../features/auth/AuthContext';
+import { useAuth } from '../../context/auth/AuthContext';
 import { useAppStore } from '../../store/appStore';
 import { useProfileSetupStore } from '../../store/profileSetupStore';
 import { getFcmToken, requestNotificationPermission } from '../../services/firebase/notifications';

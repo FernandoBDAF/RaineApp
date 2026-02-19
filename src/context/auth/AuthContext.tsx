@@ -2,8 +2,14 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { getJson, setJson, storageKeys } from '../../cache/mmkv';
 import { isFirebaseMockMode } from '../../config/environment';
-import { createUserProfile } from '../../services/firebase/users';
-import { onAuthStateChanged, resetPassword, signIn, signOut, signUp } from '../../services/firebase/auth';
+import { waitForUserProfile } from '../../services/firebase/users';
+import {
+  onAuthStateChanged,
+  resetPassword,
+  signIn,
+  signOut,
+  signUp
+} from '../../services/firebase/auth';
 
 export interface AuthUser {
   uid: string;
@@ -40,6 +46,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     }
   });
   const [isLoading, setIsLoading] = useState(true);
+  const isAuthenticated = !!user;
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged((firebaseUser) => {
@@ -61,28 +68,25 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     () => ({
       user,
       isLoading,
-      isAuthenticated: Boolean(user),
+      isAuthenticated,
       login: async (email, password) => {
         await signIn(email, password);
       },
-      register: async (email, password) => {
-        const credential = await signUp(email, password);
-        
+      register: async (email, password) => {        
+        const credential = await signUp(email, password);        
+
         if (!isFirebaseMockMode()) {
-          // Only create Firestore profile when not in mock mode
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
-          const firestore = require('@react-native-firebase/firestore').default;
-          const profile = {
-            uid: credential.user.uid,
-            email: credential.user.email ?? email,
-            displayName: credential.user.displayName ?? 'New User',
-            photoURL: credential.user.photoURL ?? undefined,
-            subscriptionStatus: 'free',
-            createdAt: firestore.FieldValue.serverTimestamp(),
-            lastSeen: firestore.FieldValue.serverTimestamp()
-          };
-          await createUserProfile(credential.user.uid, profile);
+          // Best-effort wait for the Auth trigger to create the Firestore profile.
+          // If Firestore is unavailable, registration still succeeds — the profile
+          // will be created when the trigger eventually runs.
+          await waitForUserProfile(credential.user.uid).catch((err) => {
+            console.warn('[register] Could not confirm profile creation:', err);
+          });
         }
+
+        // Firebase signs users in automatically after signUp.
+        // Sign out to keep the user on the login flow after registration.
+        await signOut();
       },
       logout: async () => {
         await signOut();
@@ -91,7 +95,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         await resetPassword(email);
       }
     }),
-    [user, isLoading]
+    [user, isLoading, isAuthenticated]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

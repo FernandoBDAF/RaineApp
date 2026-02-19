@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
-import { useAuth } from '../../features/auth/AuthContext';
+import { useAuth } from '../../context/auth/AuthContext';
 import { listenToUserProfile, updateUserProfile } from '../../services/firebase/users';
 import type { UserProfile } from '../../types';
 import { Input } from '../../components/ui/Input';
@@ -17,6 +17,7 @@ export default function ProfileScreen() {
     if (!user) {
       return;
     }
+
     const unsubscribe = listenToUserProfile(user.uid, (nextProfile) => {
       setProfile(nextProfile);
       setDisplayName(nextProfile?.displayName ?? '');

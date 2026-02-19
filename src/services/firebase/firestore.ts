@@ -4,6 +4,7 @@
  */
 
 import { isFirebaseMockMode } from '../../config/environment';
+import firestore from '@react-native-firebase/firestore';
 
 // Mock Firestore for UI testing
 const mockCollection = {
@@ -25,6 +26,7 @@ const mockDoc = {
   update: async () => {},
   delete: async () => {},
   collection: () => mockCollection,
+  onSnapshot: (_callback: (snapshot: { exists: boolean; data: () => unknown }) => void) => () => {},
 };
 
 const mockFirestore = () => ({
@@ -36,8 +38,6 @@ export function getDb() {
     return mockFirestore();
   }
   
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const firestore = require('@react-native-firebase/firestore').default;
   return firestore();
 }
 
