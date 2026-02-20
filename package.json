@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "scripts": {
+    "fix": "expo install --fix",
     "start": "expo start",
     "dev": "expo start --dev-client",
     "android": "expo run:android",

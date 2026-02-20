@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useActivityStore } from "../../store/activityStore";
-import { useAuth } from "../../features/auth/AuthContext";
+import { useAuth } from "../../context/auth/AuthContext";
 import { HomeHeader } from "../../components/home/HomeHeader";
 import { ActivityDashboard } from "../../components/home/ActivityDashboard";
 import { SectionHeader } from "../../components/shared/SectionHeader";

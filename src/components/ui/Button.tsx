@@ -28,7 +28,7 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={disabled}
       className={`rounded-md px-4 py-3 ${variantClass[variant]} ${
         disabled ? 'opacity-50' : 'opacity-100'
-      }`}
+      }`}      
     >
       <Text className={`text-center font-semibold ${variant === 'outline' ? 'text-slate-700' : 'text-white'}`}>
         {title}

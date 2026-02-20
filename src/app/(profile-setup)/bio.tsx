@@ -8,7 +8,7 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { useProfileSetupStore } from '../../store/profileSetupStore';
 import { generateBio } from '../../services/bio';
 import { saveProfileSetup } from '../../services/profile';
-import { useAuth } from '../../features/auth/AuthContext';
+import { useAuth } from '../../context/auth/AuthContext';
 
 export default function BioScreen() {
   const router = useRouter();

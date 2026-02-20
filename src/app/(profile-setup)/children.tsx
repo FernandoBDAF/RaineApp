@@ -14,10 +14,7 @@ export default function ChildrenScreen() {
   const { childCount, isExpecting, dueDate, children, setChildren, setCurrentStep } =
     useProfileSetupStore();
 
-  const canContinue = useMemo(() => {
-    // if (childCount <= 0) {
-    //   return false;
-    // }
+  const canContinue = useMemo(() => {  
     if (isExpecting && (!dueDate?.month || !dueDate?.year)) {
       return false;
     }
