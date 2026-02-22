@@ -1,11 +1,11 @@
-import React, { useEffect } from "react";
-import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { useActivityStore } from "../../store/activityStore";
-import { useAuth } from "../../context/auth/AuthContext";
-import { HomeHeader } from "../../components/home/HomeHeader";
+import { useEffect } from "react";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { ActivityDashboard } from "../../components/home/ActivityDashboard";
+import { HomeHeader } from "../../components/home/HomeHeader";
 import { SectionHeader } from "../../components/shared/SectionHeader";
+import { useActivityStore } from "../../store/activityStore";
+import { useProfileSetupStore } from "../../store/profileSetupStore";
 
 // ---------------------------------------------------------------------------
 // Placeholder components for features being built in parallel
@@ -116,7 +116,7 @@ function DropPreviewPlaceholder() {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const photoURL = useProfileSetupStore((state) => state.photoURL);
   const setCounts = useActivityStore((state) => state.setCounts);
 
   // Set mock activity counts on mount
@@ -127,12 +127,12 @@ export default function HomeScreen() {
       savedTips: 0,
       questionResponses: 2,
     });
-  }, [setCounts]);
+  }, [setCounts]);  
 
   return (
     <ScrollView className="flex-1 bg-white">
       <HomeHeader
-        userPhotoURL={user?.photoURL ?? undefined}
+        userPhotoURL={photoURL ?? undefined}
         onProfilePress={() => router.push("/profile")}
       />
 

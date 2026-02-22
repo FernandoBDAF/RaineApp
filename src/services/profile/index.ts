@@ -1,5 +1,6 @@
 import type { ProfileSetupData } from '../../types/profile-setup';
 import { isFirebaseMockMode, isDev } from '../../config/environment';
+import auth from '@react-native-firebase/auth';
 
 /**
  * Whether Firestore operations should be skipped.
@@ -20,9 +21,8 @@ export async function saveProfileSetup(uid: string, data: ProfileSetupData): Pro
     .collection('users')
     .doc(uid)
     .update({
-      ...data,
-      profileSetupCompleted: true,
-      profileSetupCompletedAt: firestore.FieldValue.serverTimestamp()
+      ...data,      
+      profileSetupCompletedAt: firestore.FieldValue.serverTimestamp(),      
     });
 }
 
@@ -30,8 +30,14 @@ export async function uploadProfilePhoto(uid: string, uri: string): Promise<stri
   if (shouldSkipFirestore()) {
     return uri;
   }
+
+  const currentUser = auth().currentUser;
+  if (!currentUser) {
+    throw new Error('User not authenticated');
+  }
+
   const storage = require('@react-native-firebase/storage').default;
-  const reference = storage().ref(`users/${uid}/profile.jpg`);
+  const reference = storage().ref(`users/${uid}/profile/profile.jpg`);
   await reference.putFile(uri);
   return reference.getDownloadURL();
 }

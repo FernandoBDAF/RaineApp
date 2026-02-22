@@ -1,13 +1,13 @@
-import React, { useState } from "react";
-import { View } from "react-native";
-import { useRouter } from "expo-router";
-import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
-import { ContinueButton } from "../../components/profile-setup/ContinueButton";
-import { PhotoUpload } from "../../components/profile-setup/PhotoUpload";
-import { SetupHeader } from "../../components/profile-setup/SetupHeader";
-import { useProfileSetupStore } from "../../store/profileSetupStore";
-import { uploadProfilePhoto } from "../../services/profile";
-import { useAuth } from "../../context/auth/AuthContext";
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { View } from 'react-native';
+import { ContinueButton } from '../../components/profile-setup/ContinueButton';
+import { PhotoUpload } from '../../components/profile-setup/PhotoUpload';
+import { SetupHeader } from '../../components/profile-setup/SetupHeader';
+import { useAuth } from '../../context/auth/AuthContext';
+import { uploadProfilePhoto } from '../../services/profile';
+import { useProfileSetupStore } from '../../store/profileSetupStore';
 
 export default function PhotoScreen() {
   const router = useRouter();
@@ -29,7 +29,7 @@ export default function PhotoScreen() {
         const image = await context.renderAsync();
         const manipulated = await image.saveAsync({
           compress: 0.8,
-          format: SaveFormat.JPEG,
+          format: SaveFormat.JPEG
         });
         const remoteUrl = await uploadProfilePhoto(user.uid, manipulated.uri);
         setPhoto(remoteUrl);
@@ -39,7 +39,7 @@ export default function PhotoScreen() {
     }
 
     setCurrentStep(3);
-    router.push("/(profile-setup)/location");
+    router.push('/(profile-setup)/location');
   };
 
   return (
@@ -54,7 +54,7 @@ export default function PhotoScreen() {
       <ContinueButton
         onPress={handleContinue}
         disabled={loading}
-        label={loading ? "UPLOADING..." : "CONTINUE"}
+        label={loading ? 'UPLOADING...' : 'CONTINUE'}
       />
     </View>
   );

@@ -1,4 +1,4 @@
-export type { UserProfile } from './user';
+export { userProfileSchema, type UserProfile } from './user';
 export type { Room } from './room';
 export type { Message } from './message';
 export type { SocialProvider } from './auth';

@@ -1,9 +1,18 @@
-import { getDb } from './firestore';
+import { db, getDb } from './firestore';
 import { isFirebaseMockMode } from '../../config/environment';
-import type { UserProfile } from '../../types';
+import { userProfileSchema, type UserProfile } from '../../types/user';
 
 // Lazy getter for users collection
 const getUsersCollection = () => getDb().collection('users');
+
+function parseUserProfile(data: unknown): UserProfile | null {
+  const result = userProfileSchema.safeParse(data);
+  if (!result.success) {
+    console.error('[users] Invalid user profile data:', result.error.flatten());
+    return null;
+  }
+  return result.data;
+}
 
 export async function getUserProfile(uid: string) {
   if (isFirebaseMockMode()) {
@@ -14,9 +23,10 @@ export async function getUserProfile(uid: string) {
   if (!doc.exists) {
     return null;
   }
-  return doc.data() as UserProfile;
+  const raw = doc.data();
+  const data = { uid, ...(typeof raw === 'object' && raw !== null ? raw : {}) };
+  return parseUserProfile(data);
 }
-
 
 /**
  * Waits for the Auth trigger (onUserCreate) to create the user profile in Firestore.
@@ -24,24 +34,13 @@ export async function getUserProfile(uid: string) {
  * Errors are caught gracefully — registration should not fail because of Firestore hiccups,
  * since the Auth user already exists and the trigger will eventually create the profile.
  */
-export async function waitForUserProfile(uid: string, maxAttempts = 10, delayMs = 500): Promise<UserProfile | null> {
+export async function waitForUserProfile(uid: string): Promise<UserProfile | null> {
   if (isFirebaseMockMode()) {
     console.log('🔶 [Mock] User profile created:', uid);
     return null;
   }
 
-  for (let i = 0; i < maxAttempts; i++) {
-    try {
-      const profile = await getUserProfile(uid);
-      if (profile) return profile;
-    } catch (error) {
-      console.warn(`[waitForUserProfile] Attempt ${i + 1}/${maxAttempts} failed:`, error);
-    }
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
-  }
-
-  console.warn('[waitForUserProfile] Profile not found after polling — will be available later via Auth trigger.');
-  return null;
+  return getUserProfile(uid);
 }
 
 export async function updateUserProfile(uid: string, data: Partial<UserProfile>) {
@@ -68,11 +67,24 @@ export function listenToUserProfile(uid: string, callback: (profile: UserProfile
     return () => {};
   }
 
-  return getUsersCollection().doc(uid).onSnapshot((snapshot: { exists: boolean; data: () => unknown }) => {
-    if (!snapshot.exists) {
-      callback(null);
-      return;
-    }
-    callback(snapshot.data() as UserProfile);
-  });
+  return getUsersCollection()
+    .doc(uid)
+    .onSnapshot((snapshot: { exists: boolean; data: () => unknown }) => {
+      if (!snapshot.exists) {
+        callback(null);
+        return;
+      }
+      const raw = snapshot.data();
+      const data = { uid, ...(typeof raw === 'object' && raw !== null ? raw : {}) };
+      callback(parseUserProfile(data));
+    });
+}
+
+export async function isReferralCodeTaken(code: string): Promise<boolean> {
+    const snapshot = await db
+    .collection("users")
+    .where("referralCode", "==", code)
+    .limit(1)
+    .get();    
+  return !snapshot.empty;
 }

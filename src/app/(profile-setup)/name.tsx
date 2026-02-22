@@ -1,10 +1,10 @@
-import React, { useMemo, useState } from "react";
-import { View } from "react-native";
-import { useRouter } from "expo-router";
-import { Input } from "../../components/ui/Input";
-import { ContinueButton } from "../../components/profile-setup/ContinueButton";
-import { SetupHeader } from "../../components/profile-setup/SetupHeader";
-import { useProfileSetupStore } from "../../store/profileSetupStore";
+import { useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { View } from 'react-native';
+import { ContinueButton } from '../../components/profile-setup/ContinueButton';
+import { SetupHeader } from '../../components/profile-setup/SetupHeader';
+import { Input } from '../../components/ui/Input';
+import { useProfileSetupStore } from '../../store/profileSetupStore';
 
 const isLettersOnly = (value: string) => /^[A-Za-z]+$/.test(value);
 
@@ -23,18 +23,21 @@ export default function NameScreen() {
   );
   const canContinue = firstNameValid && lastInitialValid;
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     setSubmitted(true);
     if (!canContinue) {
       return;
     }
     setCurrentStep(2);
-    router.push("/(profile-setup)/photo");
+    router.push('/(profile-setup)/photo');
   };
 
   return (
     <View className="flex-1 bg-white">
-      <SetupHeader headline="Let's start with your name" subheadline="FIRST NAME AND LAST NAME INITIAL" />
+      <SetupHeader
+        headline="Let's start with your name"
+        subheadline="FIRST NAME AND LAST NAME INITIAL"
+      />
       <View className="flex-1 px-6 pt-6">
         <View className="gap-4">
           <Input
@@ -42,8 +45,8 @@ export default function NameScreen() {
             value={firstName}
             placeholder="First Name"
             autoCapitalize="words"
-            onChangeText={(text) => setName(text.replace(/[^A-Za-z]/g, ""), lastInitial)}
-            error={submitted && !firstNameValid ? "Please enter your first name" : undefined}
+            onChangeText={(text) => setName(text.replace(/[^A-Za-z]/g, ''), lastInitial)}
+            error={submitted && !firstNameValid ? 'Please enter your first name' : undefined}
           />
           <Input
             label="Last Initial"
@@ -52,9 +55,9 @@ export default function NameScreen() {
             autoCapitalize="characters"
             maxLength={1}
             onChangeText={(text) =>
-              setName(firstName, text.replace(/[^A-Za-z]/g, "").toUpperCase())
+              setName(firstName, text.replace(/[^A-Za-z]/g, '').toUpperCase())
             }
-            error={submitted && !lastInitialValid ? "Please enter your last initial" : undefined}
+            error={submitted && !lastInitialValid ? 'Please enter your last initial' : undefined}
           />
         </View>
       </View>

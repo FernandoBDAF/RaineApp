@@ -9,67 +9,57 @@ export interface DueDate {
   year: number;
 }
 
-export type CityFeel = "rooted" | "finding_footing" | "local_but_missing";
+export type CityFeel = 'rooted' | 'finding_footing' | 'local_but_missing';
 
-export type BeforeMotherhood =
-  | "travel"
-  | "hosting"
-  | "movement"
-  | "nature"
-  | "culture"
-  | "career";
+export type BeforeMotherhood = 'travel' | 'hosting' | 'movement' | 'nature' | 'culture' | 'career';
 
 export type PerfectWeekend =
-  | "adventure"
-  | "slow_mornings"
-  | "good_company"
-  | "discovery"
-  | "movement"
-  | "family";
+  | 'adventure'
+  | 'slow_mornings'
+  | 'good_company'
+  | 'discovery'
+  | 'movement'
+  | 'family';
 
-export type FeelYourself =
-  | "alone_time"
-  | "partner_time"
-  | "friends_night"
-  | "change_scenery";
+export type FeelYourself = 'alone_time' | 'partner_time' | 'friends_night' | 'change_scenery';
 
 export type HardTruth =
-  | "lose_myself"
-  | "recovery_time"
-  | "mental_load"
-  | "little_sleep"
-  | "grief_joy"
-  | "relationship_change";
+  | 'lose_myself'
+  | 'recovery_time'
+  | 'mental_load'
+  | 'little_sleep'
+  | 'grief_joy'
+  | 'relationship_change';
 
 export type UnexpectedJoy =
-  | "deeper_love"
-  | "person_becoming"
-  | "body_resilience"
-  | "partner_parent"
-  | "function_no_sleep"
-  | "fierce_instincts";
+  | 'deeper_love'
+  | 'person_becoming'
+  | 'body_resilience'
+  | 'partner_parent'
+  | 'function_no_sleep'
+  | 'fierce_instincts';
 
 export type Aesthetic =
-  | "clean_minimal"
-  | "natural_textured"
-  | "classic_timeless"
-  | "eclectic_collected"
-  | "coastal_casual"
-  | "refined_essentials";
+  | 'clean_minimal'
+  | 'natural_textured'
+  | 'classic_timeless'
+  | 'eclectic_collected'
+  | 'coastal_casual'
+  | 'refined_essentials';
 
 export type MomFriendStyle =
-  | "coffee_dates"
-  | "playdates"
-  | "group_hangouts"
-  | "virtual_chats"
-  | "weekend_family"
-  | "workout_buddies";
+  | 'coffee_dates'
+  | 'playdates'
+  | 'group_hangouts'
+  | 'virtual_chats'
+  | 'weekend_family'
+  | 'workout_buddies';
 
 export type WhatBroughtYou =
-  | "new_here"
-  | "friends_no_kids"
-  | "moms_who_get_it"
-  | "deeper_connections";
+  | 'new_here'
+  | 'friends_no_kids'
+  | 'moms_who_get_it'
+  | 'deeper_connections';
 
 export interface ProfileSetupData {
   firstName: string;
@@ -95,5 +85,5 @@ export interface ProfileSetupData {
   generatedBio: string;
   bioApproved: boolean;
   currentStep: number;
-  completed: boolean;
+  profileSetupCompletedAt: string | null;
 }
