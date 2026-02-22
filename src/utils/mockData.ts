@@ -1,5 +1,38 @@
 import type { Message, Room, UserProfile } from '../types';
 
+// Mock Firestore Timestamp shape for development (has toDate for schema compatibility)
+const mockTimestamp = () =>
+  ({
+    toDate: () => new Date(),
+    seconds: Math.floor(Date.now() / 1000),
+    nanoseconds: 0
+  }) as UserProfile['createdAt'];
+
+const mockUserFields: Omit<UserProfile, 'uid' | 'email' | 'displayName' | 'photoURL' | 'subscriptionStatus' | 'createdAt' | 'lastSeen'> = {
+  firstName: '',
+  lastInitial: '',
+  zipCode: '',
+  city: '',
+  state: '',
+  county: '',
+  cityFeel: '',
+  childCount: 0,
+  isExpecting: false,
+  dueDate: null,
+  children: [],
+  beforeMotherhood: [],
+  perfectWeekend: [],
+  feelYourself: null,
+  hardTruths: [],
+  unexpectedJoys: [],
+  aesthetic: [],
+  momFriendStyle: [],
+  whatBroughtYou: null,
+  generatedBio: '',
+  bioApproved: false,
+  profileSetupCompleted: false
+};
+
 export const mockUsers: UserProfile[] = [
   {
     uid: 'user_1',
@@ -7,8 +40,9 @@ export const mockUsers: UserProfile[] = [
     displayName: 'Rae',
     photoURL: undefined,
     subscriptionStatus: 'free',
-    createdAt: new Date() as any,
-    lastSeen: new Date() as any
+    createdAt: mockTimestamp(),
+    lastSeen: mockTimestamp(),
+    ...mockUserFields
   },
   {
     uid: 'user_2',
@@ -16,8 +50,9 @@ export const mockUsers: UserProfile[] = [
     displayName: 'Noah',
     photoURL: undefined,
     subscriptionStatus: 'free',
-    createdAt: new Date() as any,
-    lastSeen: new Date() as any
+    createdAt: mockTimestamp(),
+    lastSeen: mockTimestamp(),
+    ...mockUserFields
   }
 ];
 

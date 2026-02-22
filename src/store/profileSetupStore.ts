@@ -1,42 +1,55 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { mmkvStorage } from "./persist";
-import type { Child, ProfileSetupData } from "../types/profile-setup";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { mmkvStorage } from './persist';
+import type { Child, DueDate, ProfileSetupData } from '../types/profile-setup';
+import type { UserProfile } from '../types/user';
 
 interface ProfileSetupStore extends ProfileSetupData {
   setName: (firstName: string, lastInitial: string) => void;
   setPhoto: (photoURL: string) => void;
   setLocation: (zipCode: string, city: string, state: string, county: string) => void;
-  setCityFeel: (cityFeel: ProfileSetupData["cityFeel"]) => void;
+  setCityFeel: (cityFeel: ProfileSetupData['cityFeel']) => void;
   setChildren: (
     childCount: number,
     children: Child[],
     isExpecting: boolean,
-    dueDate: ProfileSetupData["dueDate"]
+    dueDate: ProfileSetupData['dueDate']
   ) => void;
-  setBeforeMotherhood: (beforeMotherhood: ProfileSetupData["beforeMotherhood"]) => void;
-  setPerfectWeekend: (perfectWeekend: ProfileSetupData["perfectWeekend"]) => void;
-  setFeelYourself: (feelYourself: ProfileSetupData["feelYourself"]) => void;
-  setHardTruths: (hardTruths: ProfileSetupData["hardTruths"]) => void;
-  setUnexpectedJoys: (unexpectedJoys: ProfileSetupData["unexpectedJoys"]) => void;
-  setAesthetic: (aesthetic: ProfileSetupData["aesthetic"]) => void;
-  setMomFriendStyle: (momFriendStyle: ProfileSetupData["momFriendStyle"]) => void;
-  setWhatBroughtYou: (whatBroughtYou: ProfileSetupData["whatBroughtYou"]) => void;
+  setBeforeMotherhood: (beforeMotherhood: ProfileSetupData['beforeMotherhood']) => void;
+  setPerfectWeekend: (perfectWeekend: ProfileSetupData['perfectWeekend']) => void;
+  setFeelYourself: (feelYourself: ProfileSetupData['feelYourself']) => void;
+  setHardTruths: (hardTruths: ProfileSetupData['hardTruths']) => void;
+  setUnexpectedJoys: (unexpectedJoys: ProfileSetupData['unexpectedJoys']) => void;
+  setAesthetic: (aesthetic: ProfileSetupData['aesthetic']) => void;
+  setMomFriendStyle: (momFriendStyle: ProfileSetupData['momFriendStyle']) => void;
+  setWhatBroughtYou: (whatBroughtYou: ProfileSetupData['whatBroughtYou']) => void;
   setBio: (generatedBio: string, bioApproved: boolean) => void;
   setCurrentStep: (currentStep: number) => void;
   decrementStep: () => void;
-  completeSetup: () => void;
+  completeSetup: (profileSetupCompletedAt: string) => void;
   reset: () => void;
+  syncFromUserProfile: (profile: UserProfile) => void;
+}
+
+function parseDueDate(value: string | null): DueDate | null {
+  if (!value || typeof value !== 'string') return null;
+  const parts = value.split(/[-/]/).map((p) => Number.parseInt(p, 10));
+  if (parts.length < 2 || parts.some(Number.isNaN)) return null;
+  const [a, b] = parts;
+  const month = a <= 12 ? a : b;
+  const year = a <= 12 ? b : a;
+  if (month < 1 || month > 12 || year < 1900) return null;
+  return { month, year };
 }
 
 const initialState: ProfileSetupData = {
-  firstName: "",
-  lastInitial: "",
-  photoURL: "",
-  zipCode: "",
-  city: "",
-  state: "",
-  county: "",
+  firstName: '',
+  lastInitial: '',
+  photoURL: '',
+  zipCode: '',
+  city: '',
+  state: '',
+  county: '',
   cityFeel: null,
   childCount: 0,
   isExpecting: false,
@@ -50,10 +63,10 @@ const initialState: ProfileSetupData = {
   aesthetic: [],
   momFriendStyle: [],
   whatBroughtYou: null,
-  generatedBio: "",
+  generatedBio: '',
   bioApproved: false,
   currentStep: 1,
-  completed: false
+  profileSetupCompletedAt: null
 };
 
 export const useProfileSetupStore = create<ProfileSetupStore>()(
@@ -76,13 +89,39 @@ export const useProfileSetupStore = create<ProfileSetupStore>()(
       setWhatBroughtYou: (whatBroughtYou) => set({ whatBroughtYou }),
       setBio: (generatedBio, bioApproved) => set({ generatedBio, bioApproved }),
       setCurrentStep: (currentStep) => set({ currentStep }),
-      decrementStep: () =>
-        set((state) => ({ currentStep: Math.max(1, state.currentStep - 1) })),
-      completeSetup: () => set({ completed: true }),
-      reset: () => set(initialState)
+      decrementStep: () => set((state) => ({ currentStep: Math.max(1, state.currentStep - 1) })),
+      completeSetup: (profileSetupCompletedAt) => set({ profileSetupCompletedAt }),
+      reset: () => set(initialState),
+      syncFromUserProfile: (profile) =>
+        set({
+          firstName: profile.firstName ?? '',
+          lastInitial: profile.lastInitial ?? '',
+          photoURL: profile.photoURL ?? '',
+          zipCode: profile.zipCode ?? '',
+          city: profile.city ?? '',
+          state: profile.state ?? '',
+          county: profile.county ?? '',
+          cityFeel: (profile.cityFeel as ProfileSetupData['cityFeel']) || null,
+          childCount: profile.childCount ?? 0,
+          isExpecting: profile.isExpecting ?? false,
+          dueDate: parseDueDate(profile.dueDate),
+          children: (profile.children as Child[]) ?? [],
+          beforeMotherhood:
+            (profile.beforeMotherhood as ProfileSetupData['beforeMotherhood']) ?? [],
+          perfectWeekend: (profile.perfectWeekend as ProfileSetupData['perfectWeekend']) ?? [],
+          feelYourself: (profile.feelYourself as ProfileSetupData['feelYourself']) ?? null,
+          hardTruths: (profile.hardTruths as ProfileSetupData['hardTruths']) ?? [],
+          unexpectedJoys: (profile.unexpectedJoys as ProfileSetupData['unexpectedJoys']) ?? [],
+          aesthetic: (profile.aesthetic as ProfileSetupData['aesthetic']) ?? [],
+          momFriendStyle: (profile.momFriendStyle as ProfileSetupData['momFriendStyle']) ?? [],
+          whatBroughtYou: (profile.whatBroughtYou as ProfileSetupData['whatBroughtYou']) ?? null,
+          generatedBio: profile.generatedBio ?? '',
+          bioApproved: profile.bioApproved ?? false,
+          profileSetupCompletedAt: profile.profileSetupCompletedAt?.toDate().toISOString() ?? null
+        })
     }),
     {
-      name: "profile-setup",
+      name: 'profile-setup',
       storage: mmkvStorage
     }
   )

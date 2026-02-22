@@ -1,22 +1,27 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   Keyboard,
   KeyboardAvoidingView,
   Linking,
   Pressable,
   ScrollView,
   StyleSheet,
+  Text,
+  TouchableOpacity,
   TouchableWithoutFeedback,
-  View,
-  Text
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { setJson, storageKeys } from '../../cache/mmkv';
 import { OtpInput } from '../../components/ui/OtpInput';
 import { ShakeView } from '../../components/ui/ShakeView';
+import { useReferralCode } from '../../hooks/useReferralCode';
+import { ReferralCode } from '../../types/referral';
 import { validateReferralCode } from '../../services/referral';
-import type { ReferralCode } from '../../types';
+import { setJson } from '../../cache/mmkv';
+import { storageKeys } from '../../cache/mmkv';
 
 const REQUEST_INVITE_EMAIL =
   'mailto:access@raineapp.com?subject=Request%20for%20Raine%20Invite&body=Hi%20Raine%20Team%2C%0A%0AI%27d%20love%20to%20join%20Raine!%0A%0AName%3A%0AEmail%3A%0ALocation%3A%0A%0ALooking%20forward%20to%20connecting!';
@@ -26,9 +31,10 @@ const CODE_LENGTH = 7;
 export default function ReferralScreen() {
   const router = useRouter();
   const [code, setCode] = useState('');
+
   const [error, setError] = useState<string | null>(null);
-  const [isValidating, setIsValidating] = useState(false);
   const [shouldShake, setShouldShake] = useState(false);
+  const { checkIfReferralCodeExists, loading: isValidating } = useReferralCode();
 
   const handleCodeComplete = useCallback(
     async (enteredCode: string) => {
@@ -36,10 +42,16 @@ export default function ReferralScreen() {
         return;
       }
 
-      setIsValidating(true);
       setError(null);
 
       try {
+        // const result = await checkIfReferralCodeExists(enteredCode);
+        // if (result) {
+        //   router.replace('/(auth)/signup');
+        // } else {
+        //   setError('Invalid code. Please try again');
+        //   setShouldShake(true);
+        // }
         const result = await validateReferralCode(enteredCode);
         if (result.valid) {
           const referral: ReferralCode = {
@@ -48,7 +60,7 @@ export default function ReferralScreen() {
           };
           setJson(storageKeys.validatedReferralCode, referral);
           setJson(storageKeys.referralValidatedAt, referral.validatedAt);
-          router.replace('/(auth)/login');
+          router.replace('/(auth)/signup');
         } else {
           setError(result.error ?? 'Invalid code. Please try again');
           setShouldShake(true);
@@ -56,8 +68,6 @@ export default function ReferralScreen() {
       } catch {
         setError('Something went wrong. Please try again.');
         setShouldShake(true);
-      } finally {
-        setIsValidating(false);
       }
     },
     [isValidating, router]
@@ -70,6 +80,18 @@ export default function ReferralScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-orange-500">
+      {isValidating && (
+        <View style={[StyleSheet.absoluteFillObject, localStyles.spinnerOverlay]}>
+          <ActivityIndicator size="large" color="white" />
+        </View>
+      )}
+      <TouchableOpacity
+        onPress={() => router.replace('/(auth)/login')}
+        className="absolute left-4 top-10 z-10 h-10 w-10 items-center justify-center"
+        accessibilityLabel="Voltar ao login"
+      >
+        <Ionicons name="chevron-back" size={28} color="white" />
+      </TouchableOpacity>
       <KeyboardAvoidingView behavior={'padding'} className="flex-1">
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView
@@ -132,5 +154,11 @@ const localStyles = StyleSheet.create({
   },
   serif: {
     fontFamily: 'serif'
+  },
+  spinnerOverlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100
   }
 });

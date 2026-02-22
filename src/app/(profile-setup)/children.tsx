@@ -98,7 +98,7 @@ export default function ChildrenScreen() {
         <View className="mt-6 mb-6">
           <ChildForm
             childCount={childCount}
-            children={children}
+            childList={children}
             isExpecting={isExpecting}
             dueDate={dueDate}
             onChildrenChange={handleChildrenChange}

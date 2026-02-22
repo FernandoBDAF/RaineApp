@@ -6,7 +6,7 @@ import type { Child, DueDate } from "../../types/profile-setup";
 
 interface ChildFormProps {
   childCount: number;
-  children: Child[];
+  childList: Child[];
   isExpecting: boolean;
   dueDate: DueDate | null;
   onChildrenChange: (children: Child[]) => void;
@@ -15,14 +15,14 @@ interface ChildFormProps {
 
 export const ChildForm: React.FC<ChildFormProps> = ({
   childCount,
-  children,
+  childList,
   isExpecting,
   dueDate,
   onChildrenChange,
   onDueDateChange
 }) => {
   const handleChildChange = (index: number, updates: Partial<Child>) => {
-    const next = [...children];
+    const next = [...childList];
     next[index] = { ...next[index], ...updates };
     onChildrenChange(next);
   };
@@ -46,7 +46,7 @@ export const ChildForm: React.FC<ChildFormProps> = ({
           <MonthYearPicker
             month={dueDate?.month ? String(dueDate.month).padStart(2, "0") : ""}
             year={dueDate?.year ? String(dueDate.year) : ""}
-            onChange={handleDueDateChange}
+            onChange={handleDueDateChange}            
           />
         </View>
       ) : null}
@@ -57,23 +57,24 @@ export const ChildForm: React.FC<ChildFormProps> = ({
             {`Child ${index + 1}`}
           </Text>
           <Input
-            value={children[index]?.name ?? ""}
+            value={childList[index]?.name ?? ""}
             placeholder={`Name`}
             onChangeText={(text) => handleChildChange(index, { name: text })}
           />
           <MonthYearPicker
             month={
-              children[index]?.birthMonth
-                ? String(children[index]?.birthMonth).padStart(2, "0")
+              childList[index]?.birthMonth
+                ? String(childList[index]?.birthMonth).padStart(2, "0")
                 : ""
             }
-            year={children[index]?.birthYear ? String(children[index]?.birthYear) : ""}
+            year={childList[index]?.birthYear ? String(childList[index]?.birthYear) : ""}
             onChange={(next) =>
               handleChildChange(index, {
                 birthMonth: Number(next.month),
                 birthYear: Number(next.year)
               })
             }
+            setYearManual={true}
           />
         </View>
       ))}

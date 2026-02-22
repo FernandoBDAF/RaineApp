@@ -1,11 +1,8 @@
-import React from 'react';
-import { Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { ProfileTagList } from '../../components/profile/ProfileTagList';
 import { useAuth } from '../../context/auth/AuthContext';
 import { useProfileSetupStore } from '../../store/profileSetupStore';
-import { ProfileTagList } from '../../components/profile/ProfileTagList';
-import { storage } from '../../cache/mmkv';
-import { useAppStore } from '../../store/appStore';
 
 function getChildAge(birthMonth: number, birthYear: number): string {
   const now = new Date();
@@ -42,37 +39,11 @@ export default function ProfileScreen() {
   const aesthetic = useProfileSetupStore((s) => s.aesthetic);
   const momFriendStyle = useProfileSetupStore((s) => s.momFriendStyle);
 
-  const setNotificationsEnabled = useAppStore((s) => s.setNotificationsEnabled);
-  const setActiveRoomId = useAppStore((s) => s.setActiveRoomId);
-  const setTheme = useAppStore((s) => s.setTheme);
-  const resetProfileSetup = useProfileSetupStore((s) => s.reset);
-
   const displayName = `${firstName} ${lastInitial}.`;
   const displayPhoto = photoURL || user?.photoURL;
 
   const handleSignOut = async () => {
     await logout();
-  };
-
-  const handleResetApp = () => {
-    Alert.alert(
-      'Reset app data?',
-      'This clears local cache and profile setup progress on this device.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: () => {
-            storage.clearAll();
-            resetProfileSetup();
-            setActiveRoomId(null);
-            setTheme('system');
-            setNotificationsEnabled(true);
-          }
-        }
-      ]
-    );
   };
 
   return (
@@ -162,14 +133,7 @@ export default function ProfileScreen() {
           className="items-center rounded-full bg-red-50 py-3.5 active:bg-red-100"
         >
           <Text className="text-sm font-semibold text-red-500">Sign Out</Text>
-        </Pressable>
-
-        <Pressable
-          onPress={handleResetApp}
-          className="items-center rounded-full bg-red-50 py-3.5 active:bg-red-100"
-        >
-          <Text className="text-sm font-semibold text-red-500">Reset APP Data</Text>
-        </Pressable>
+        </Pressable> 
       </View>
 
       {/* Bottom spacer */}

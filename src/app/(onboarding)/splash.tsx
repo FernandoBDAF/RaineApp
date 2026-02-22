@@ -1,8 +1,6 @@
 import React, { useEffect } from 'react';
 import { Image, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { getJson, storageKeys } from '../../cache/mmkv';
-import type { ReferralCode } from '../../types';
 
 import splashImage from '../../../assets/splash-screen.png';
 
@@ -13,12 +11,7 @@ export default function SplashScreen() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const referral = getJson<ReferralCode>(storageKeys.validatedReferralCode);
-      if (referral?.code) {
-        router.replace('/(auth)/login');
-      } else {
-        router.replace('/(onboarding)/referral');
-      }
+      router.replace('/(auth)/login');
     }, SPLASH_DURATION_MS);
 
     return () => clearTimeout(timer);
