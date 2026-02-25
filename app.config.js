@@ -1,57 +1,59 @@
 /** @type {import('expo/config').ExpoConfig} */
 module.exports = {
-  name: "Raine",
-  slug: "raine",
-  version: "1.0.0",
-  orientation: "portrait",
-  icon: "./assets/icon.png",
-  userInterfaceStyle: "light",
+  name: 'Raine',
+  slug: 'raine',
+  version: '1.0.1',
+  orientation: 'portrait',
+  icon: './assets/icon.png',
+  userInterfaceStyle: 'light',
   newArchEnabled: true,
   splash: {
-    image: "./assets/splash-screen.png",
-    resizeMode: "contain",
-    backgroundColor: "#ffffff",
+    image: './assets/splash-screen.png',
+    resizeMode: 'contain',
+    backgroundColor: '#ffffff'
   },
-  scheme: "raine",
+  scheme: 'raine',
   ios: {
-    bundleIdentifier: "com.raine.app",
+    bundleIdentifier: 'com.raine.app',
     supportsTablet: true,
-    googleServicesFile: "./GoogleService-Info.plist",
+    googleServicesFile: './GoogleService-Info.plist',
     infoPlist: {
-      ITSAppUsesNonExemptEncryption: false,
-    },
+      ITSAppUsesNonExemptEncryption: false
+    }
   },
   android: {
-    package: "com.raine.app",
-    googleServicesFile: "./google-services.json",
+    package: 'com.raine.app',
+    googleServicesFile: './google-services.json',
     adaptiveIcon: {
-      foregroundImage: "./assets/adaptive-icon.png",
-      backgroundColor: "#ffffff",
+      foregroundImage: './assets/adaptive-icon.png',
+      backgroundColor: '#ffffff'
     },
     edgeToEdgeEnabled: true,
-    predictiveBackGestureEnabled: false,
+    predictiveBackGestureEnabled: false
   },
   web: {
-    favicon: "./assets/favicon.png",
+    favicon: './assets/favicon.png'
   },
   plugins: [
     [
-      "expo-router",
+      'expo-router',
       {
-        root: "src/app",
-      },
+        root: 'src/app'
+      }
     ],
-    "expo-dev-client",
-    "@react-native-firebase/app",
-    "@react-native-firebase/crashlytics",
+    'expo-dev-client',
+    '@react-native-firebase/app',
+    '@react-native-firebase/crashlytics',
+    '@react-native-firebase/messaging',
+    './plugins/ios-fix-rnfirebase.js'
   ],
   extra: {
     router: {
-      root: "src/app",
+      root: 'src/app'
     },
     eas: {
-      projectId: "4df1738a-f338-4b36-9bd2-1370bd095e15",
-    },
+      projectId: '90743f25-a1d2-4070-8d97-7716eb395973'
+    }
   },
-  owner: "fernandobdaf",
+  owner: 'filipemendonca'
 };

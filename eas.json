@@ -7,9 +7,7 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "env": {
-        "RCT_NEW_ARCH_ENABLED": "1"
-      },
+      "env": {},
       "ios": {
         "simulator": true
       },
@@ -28,12 +26,20 @@
       }
     },
     "preview": {
-      "distribution": "internal",
-      "env": {
-        "RCT_NEW_ARCH_ENABLED": "1"
+      "node": "20.19.4",
+      "distribution": "store",
+      "env": {        
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyD2UeHPfn6_fGgTSTFM3Gi8VHjOdVDNeWQ",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "raineapp-backend.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "raineapp-backend",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "raineapp-backend.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "358132660024",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:358132660024:ios:bcbe42424872f7764633cd",
+        "EXPO_PUBLIC_FIREBASE_DATABASE_URL": "https://raineapp-backend.firebaseio.com"
       },
       "ios": {
-        "simulator": false
+        "simulator": false,
+        "image": "macos-sonoma-14.6-xcode-16.1"
       },
       "android": {
         "buildType": "apk"

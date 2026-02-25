@@ -2,6 +2,17 @@ const { withDangerousMod } = require('@expo/config-plugins');
 const fs = require('fs');
 const path = require('path');
 
+const DEFINES_MODULE_TAG = '# RNFB DEFINES_MODULE fix';
+const DEFINES_MODULE_BLOCK = `
+  ${DEFINES_MODULE_TAG}
+  installer.pods_project.targets.each do |target|
+    if target.name.start_with?('RNFB')
+      target.build_configurations.each do |config|
+        config.build_settings['DEFINES_MODULE'] = 'NO'
+      end
+    end
+  end`;
+
 module.exports = function withRNFirebaseFix(config) {
   return withDangerousMod(config, [
     'ios',
@@ -10,49 +21,41 @@ module.exports = function withRNFirebaseFix(config) {
       const podfilePath = path.join(iosRoot, 'Podfile');
 
       if (!fs.existsSync(podfilePath)) {
-        console.warn('⚠️ Podfile não encontrado. Pulando RNFirebase fix.');
+        console.warn('⚠️ Podfile não encontrado.');
         return config;
       }
 
       let podfile = fs.readFileSync(podfilePath, 'utf8');
       let updated = false;
 
-      /**
-       * 1️⃣ Remover use_modular_headers! (Firebase quebra com isso)
-       */
-      if (podfile.includes('use_modular_headers!')) {
-        podfile = podfile.replace(/use_modular_headers!\n?/g, '');
-        updated = true;
-      }
-
-      /**
-       * 2️⃣ Garantir inhibit_all_warnings!
-       * Evita Werror em pods do Firebase / Flipper
-       */
-      if (!podfile.includes('inhibit_all_warnings!')) {
-        // tenta inserir após use_frameworks!
-        if (podfile.match(/use_frameworks!.*\n/)) {
-          podfile = podfile.replace(/(use_frameworks!.*\n)/, `$1inhibit_all_warnings!\n`);
-        } else {
-          // fallback: insere no topo do arquivo
-          podfile = `inhibit_all_warnings!\n\n${podfile}`;
-        }
-        updated = true;
-      }
-
-      /**
-       * 3️⃣ Garantir linkage estático (necessário p/ RNFirebase + Expo)
-       */
+      // 1. Garantir use_frameworks! :linkage => :static
       if (podfile.includes('use_frameworks!') && !podfile.includes(':static')) {
         podfile = podfile.replace(/use_frameworks!.*\n/, 'use_frameworks! :linkage => :static\n');
+        updated = true;
+      }
+
+      // 2. Garantir inhibit_all_warnings!
+      if (!podfile.includes('inhibit_all_warnings!')) {
+        podfile = podfile.replace(/(use_frameworks!.*\n)/, `$1inhibit_all_warnings!\n`);
+        updated = true;
+      }
+
+      // 3. Adicionar DEFINES_MODULE = NO apenas para targets RNFB no post_install
+      if (!podfile.includes(DEFINES_MODULE_TAG)) {
+        if (podfile.match(/post_install do \|installer\|\n/)) {
+          podfile = podfile.replace(
+            /post_install do \|installer\|\n/,
+            `post_install do |installer|\n${DEFINES_MODULE_BLOCK}\n`
+          );
+        } else {
+          podfile += `\npost_install do |installer|\n${DEFINES_MODULE_BLOCK}\nend\n`;
+        }
         updated = true;
       }
 
       if (updated) {
         fs.writeFileSync(podfilePath, podfile);
         console.log('✅ Podfile atualizado com fixes para RNFirebase');
-      } else {
-        console.log('ℹ️ Podfile já estava compatível com RNFirebase');
       }
 
       return config;

@@ -1,13 +1,8 @@
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { auth } from '../../services/firebase/firebase';
 import { getJson, setJson, storageKeys } from '../../cache/mmkv';
-import {
-  onAuthStateChanged,
-  resetPassword,
-  signIn,
-  signOut,
-  signUp
-} from '../../services/firebase/auth';
+import { resetPassword, signIn, signOut, signUp } from '../../services/firebase/auth';
 import { getUserProfile, waitForUserProfile } from '../../services/firebase/users';
 import { useProfileSetupStore } from '../../store/profileSetupStore';
 
@@ -52,27 +47,33 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const isAuthenticated = !!user;
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(async (firebaseUser) => {
-      if (firebaseUser) {
-        const mapped = mapUser(firebaseUser);
-        setUser(mapped);
-        setJson(storageKeys.authUser, mapped);
+    // Usa a instância do Firebase já inicializada
+    const unsubscribe = auth().onAuthStateChanged(async (firebaseUser) => {
+      try {
+        if (firebaseUser) {
+          const mapped = mapUser(firebaseUser);
+          setUser(mapped);
+          setJson(storageKeys.authUser, mapped);
 
-        const profile = await getUserProfile(firebaseUser.uid);
-        if (profile) {
-          syncFromUserProfile(profile);
-        } else {
-          const setPhoto = useProfileSetupStore.getState().setPhoto;
-          if (firebaseUser.photoURL) {
-            setPhoto(firebaseUser.photoURL);
+          const profile = await getUserProfile(firebaseUser.uid);
+          if (profile) {
+            syncFromUserProfile(profile);
+          } else {
+            const setPhoto = useProfileSetupStore.getState().setPhoto;
+            if (firebaseUser.photoURL) {
+              setPhoto(firebaseUser.photoURL);
+            }
           }
+        } else {
+          setUser(null);
+          setJson(storageKeys.authUser, null);
+          resetProfileSetup();
         }
-      } else {
-        setUser(null);
-        setJson(storageKeys.authUser, null);
-        resetProfileSetup();
+      } catch (error) {
+        console.error('[AuthContext] Error in onAuthStateChanged:', error);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
     return unsubscribe;
@@ -88,7 +89,6 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       },
       register: async (email, password) => {
         const credential = await signUp(email, password);
-
         await waitForUserProfile(credential.user.uid).catch((err) => {
           console.warn('[register] Could not confirm profile creation:', err);
         });
