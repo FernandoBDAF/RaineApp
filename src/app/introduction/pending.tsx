@@ -86,7 +86,7 @@ export default function PendingIntroductionsScreen() {
   );
 
   return (
-    <View className="flex-1 bg-white pt-14">
+    <View className="flex-1 bg-white pt-16">
       {/* Header */}
       <View className="flex-row items-center px-6 pb-4">
         <Pressable onPress={() => router.back()} className="mr-3">

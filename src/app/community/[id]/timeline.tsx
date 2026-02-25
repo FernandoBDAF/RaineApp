@@ -59,7 +59,7 @@ export default function CommunityTimelineScreen() {
   return (
     <View className="flex-1 bg-white">
       {/* Header */}
-      <View className="flex-row items-center border-b border-slate-100 px-4 pb-3 pt-14">
+      <View className="flex-row items-center border-b border-slate-100 px-4 pb-3 pt-16">
         <Pressable onPress={() => router.back()} className="mr-3">
           <Text className="text-xl text-slate-700">←</Text>
         </Pressable>

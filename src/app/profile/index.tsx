@@ -47,9 +47,9 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-white">
+    <View className="flex-1 bg-white">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-6 pb-2 pt-14">
+      <View className="flex-row items-center justify-between px-6 pb-2 pt-16">
         <Pressable onPress={() => router.back()} className="active:opacity-70">
           <Text className="text-2xl text-slate-700">←</Text>
         </Pressable>
@@ -59,85 +59,89 @@ export default function ProfileScreen() {
         </Pressable>
       </View>
 
-      {/* Profile Photo */}
-      <View className="items-center py-6">
-        {displayPhoto ? (
-          <Image source={{ uri: displayPhoto }} className="h-36 w-36 rounded-full bg-slate-100" />
-        ) : (
-          <View className="h-36 w-36 items-center justify-center rounded-full bg-slate-100">
-            <Text className="text-5xl">👤</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Name */}
-      <Text className="text-center text-2xl font-bold text-slate-900">{displayName}</Text>
-
-      {/* Location */}
-      {city && state ? (
-        <Text className="mt-1 text-center text-sm text-slate-400">
-          {city}, {state}
-        </Text>
-      ) : null}
-
-      {/* Bio */}
-      {generatedBio ? (
-        <Text className="mx-6 mt-4 text-center text-base italic leading-6 text-slate-600">
-          &ldquo;{generatedBio}&rdquo;
-        </Text>
-      ) : null}
-
-      {/* Tags */}
-      <ProfileTagList
-        beforeMotherhood={beforeMotherhood}
-        perfectWeekend={perfectWeekend}
-        aesthetic={aesthetic}
-        momFriendStyle={momFriendStyle}
-      />
-
-      {/* Children Section */}
-      {children.length > 0 || isExpecting ? (
-        <View className="mx-6 mt-4 rounded-2xl bg-slate-50 p-4">
-          <Text className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Children
-          </Text>
-          {children.map((child, index) => (
-            <View key={index} className="flex-row items-center justify-between py-1">
-              <Text className="text-base text-slate-700">{child.name || `Child ${index + 1}`}</Text>
-              <Text className="text-sm text-slate-400">
-                {getChildAge(child.birthMonth, child.birthYear)}
-              </Text>
+      <ScrollView className="flex-1 bg-white">
+        {/* Profile Photo */}
+        <View className="items-center py-6">
+          {displayPhoto ? (
+            <Image source={{ uri: displayPhoto }} className="h-36 w-36 rounded-full bg-slate-100" />
+          ) : (
+            <View className="h-36 w-36 items-center justify-center rounded-full bg-slate-100">
+              <Text className="text-5xl">👤</Text>
             </View>
-          ))}
-          {isExpecting && dueDate ? (
-            <View className="flex-row items-center justify-between py-1">
-              <Text className="text-base text-slate-700">Baby on the way</Text>
-              <Text className="text-sm text-slate-400">
-                Due {dueDate.month}/{dueDate.year}
-              </Text>
-            </View>
-          ) : null}
+          )}
         </View>
-      ) : null}
 
-      {/* Buttons */}
-      <View className="mt-8 gap-3 px-6">
-        <Pressable
-          onPress={() => router.push('/profile/edit')}
-          className="items-center rounded-full bg-slate-100 py-3.5 active:bg-slate-200"
-        >
-          <Text className="text-sm font-semibold text-slate-700">Settings</Text>
-        </Pressable>
-        <Pressable
-          onPress={handleSignOut}
-          className="items-center rounded-full bg-red-50 py-3.5 active:bg-red-100"
-        >
-          <Text className="text-sm font-semibold text-red-500">Sign Out</Text>
-        </Pressable> 
-      </View>
+        {/* Name */}
+        <Text className="text-center text-2xl font-bold text-slate-900">{displayName}</Text>
 
-      {/* Bottom spacer */}
-      <View className="h-12" />
-    </ScrollView>
+        {/* Location */}
+        {city && state ? (
+          <Text className="mt-1 text-center text-sm text-slate-400">
+            {city}, {state}
+          </Text>
+        ) : null}
+
+        {/* Bio */}
+        {generatedBio ? (
+          <Text className="mx-6 mt-4 text-center text-base italic leading-6 text-slate-600">
+            &ldquo;{generatedBio}&rdquo;
+          </Text>
+        ) : null}
+
+        {/* Tags */}
+        <ProfileTagList
+          beforeMotherhood={beforeMotherhood}
+          perfectWeekend={perfectWeekend}
+          aesthetic={aesthetic}
+          momFriendStyle={momFriendStyle}
+        />
+
+        {/* Children Section */}
+        {children.length > 0 || isExpecting ? (
+          <View className="mx-6 mt-4 rounded-2xl bg-slate-50 p-4">
+            <Text className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
+              Children
+            </Text>
+            {children.map((child, index) => (
+              <View key={index} className="flex-row items-center justify-between py-1">
+                <Text className="text-base text-slate-700">
+                  {child.name || `Child ${index + 1}`}
+                </Text>
+                <Text className="text-sm text-slate-400">
+                  {getChildAge(child.birthMonth, child.birthYear)}
+                </Text>
+              </View>
+            ))}
+            {isExpecting && dueDate ? (
+              <View className="flex-row items-center justify-between py-1">
+                <Text className="text-base text-slate-700">Baby on the way</Text>
+                <Text className="text-sm text-slate-400">
+                  Due {dueDate.month}/{dueDate.year}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        {/* Buttons */}
+        <View className="mt-8 gap-3 px-6">
+          <Pressable
+            onPress={() => router.push('/profile/edit')}
+            className="items-center rounded-full bg-slate-100 py-3.5 active:bg-slate-200"
+          >
+            <Text className="text-sm font-semibold text-slate-700">Settings</Text>
+          </Pressable>
+          <Pressable
+            onPress={handleSignOut}
+            className="items-center rounded-full bg-red-50 py-3.5 active:bg-red-100"
+          >
+            <Text className="text-sm font-semibold text-red-500">Sign Out</Text>
+          </Pressable>
+        </View>
+
+        {/* Bottom spacer */}
+        <View className="h-12" />
+      </ScrollView>
+    </View>
   );
 }

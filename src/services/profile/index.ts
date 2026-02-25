@@ -21,8 +21,10 @@ export async function saveProfileSetup(uid: string, data: ProfileSetupData): Pro
     .collection('users')
     .doc(uid)
     .update({
-      ...data,      
-      profileSetupCompletedAt: firestore.FieldValue.serverTimestamp(),      
+      ...data,
+      profileSetupCompletedAt: data.profileSetupCompletedAt
+        ? firestore.FieldValue.serverTimestamp()
+        : null
     });
 }
 

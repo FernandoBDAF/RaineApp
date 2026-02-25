@@ -26,7 +26,7 @@ export const CommunityHeader: React.FC<CommunityHeaderProps> = ({
         {/* Back arrow */}
         <Pressable
           onPress={onBack}
-          className="absolute left-4 top-14 h-10 w-10 items-center justify-center rounded-full bg-black/30"
+          className="absolute left-4 top-16 h-10 w-10 items-center justify-center rounded-full bg-black/30"
         >
           <Text className="text-xl font-bold text-white">←</Text>
         </Pressable>

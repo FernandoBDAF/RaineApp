@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ContinueButton } from '../../components/profile-setup/ContinueButton';
 import { SetupHeader } from '../../components/profile-setup/SetupHeader';
@@ -42,7 +42,11 @@ export default function LocationScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <KeyboardAvoidingView
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 70 : 0}
+      behavior={'padding'}
+      className="flex-1 bg-white"
+    >
       <SetupHeader
         headline="Where do you call home?"
         subheadline="WE'LL INTRODUCE YOU TO MOMS WORTH KNOWING — WHO HAPPEN TO LIVE NEARBY"
@@ -56,6 +60,6 @@ export default function LocationScreen() {
         disabled={!canContinue || loading}
         label={loading ? 'VALIDATING...' : 'CONTINUE'}
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }

@@ -44,7 +44,7 @@ export default function BioScreen() {
       generatedBio: state.generatedBio,
       bioApproved: state.bioApproved,
       currentStep: state.currentStep,
-      completed: state.completed
+      profileSetupCompletedAt: state.profileSetupCompletedAt
     }))
   );
   const setBio = useProfileSetupStore((state) => state.setBio);
@@ -91,8 +91,15 @@ export default function BioScreen() {
     try {
       const finalBio = editing ? editedBio : generatedBio;
       setBio(finalBio, true);
-      await saveProfileSetup(user.uid, { ...payload, generatedBio: finalBio, bioApproved: true });
-      completeSetup();
+      const profileSetupCompletedAt = new Date().toISOString();
+      await saveProfileSetup(user.uid, {
+        ...payload,
+        generatedBio: finalBio,
+        bioApproved: true,
+        profileSetupCompletedAt
+      });
+      completeSetup(profileSetupCompletedAt);
+      console.log(profileSetupCompletedAt);
       router.replace('/welcome/welcome');
     } finally {
       setSubmitting(false);

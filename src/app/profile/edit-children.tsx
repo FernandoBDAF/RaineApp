@@ -1,5 +1,13 @@
 import React, { useMemo, useState } from "react";
-import { KeyboardAvoidingView, Pressable, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Pressable,
+  ScrollView,
+  Text,
+  View
+} from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../context/auth/AuthContext";
 import { updateUserProfile } from "../../services/firebase/users";
@@ -29,6 +37,7 @@ export default function EditChildrenScreen() {
   });
   const [localIsExpecting, setLocalIsExpecting] = useState(isExpecting);
   const [localDueDate, setLocalDueDate] = useState<DueDate | null>(dueDate);
+  const [saveLoading, setSaveLoading] = useState(false);
 
   const canSave = useMemo(() => {
     if (localIsExpecting && (!localDueDate?.month || !localDueDate?.year)) {
@@ -73,29 +82,36 @@ export default function EditChildrenScreen() {
   const handleSave = async () => {
     if (!canSave) return;
 
-    const finalChildren = localChildren.slice(0, localChildCount);
-    setChildren(localChildCount, finalChildren, localIsExpecting, localDueDate);
+    setSaveLoading(true);
+    try {
+      const finalChildren = localChildren.slice(0, localChildCount);
+      setChildren(localChildCount, finalChildren, localIsExpecting, localDueDate);
 
-    if (user) {
-      const dueDateStr = localDueDate
-        ? `${localDueDate.month}-${localDueDate.year}`
-        : null;
-    
-      await updateUserProfile(user.uid,{
-        childCount: localChildCount,
-        children: finalChildren,
-        isExpecting: localIsExpecting,
-        dueDate: dueDateStr
-      });
+      if (user) {
+        await updateUserProfile(user.uid, {
+          childCount: localChildCount,
+          children: finalChildren,
+          isExpecting: localIsExpecting,
+          dueDate: localDueDate
+        });
+      }
+      Alert.alert("Success", "Children information updated successfully.", [
+        { text: "OK", onPress: () => router.back() }
+      ]);
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Could not save. Please try again."
+      );
+    } finally {
+      setSaveLoading(false);
     }
-
-    router.back();
   };
 
   return (
     <KeyboardAvoidingView className="flex-1 bg-white" behavior="padding">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-6 pb-2 pt-14">
+      <View className="flex-row items-center justify-between px-6 pb-2 pt-16">
         <Pressable onPress={() => router.back()} className="active:opacity-70">
           <Text className="text-2xl text-slate-700">←</Text>
         </Pressable>
@@ -104,16 +120,20 @@ export default function EditChildrenScreen() {
         </Text>
         <Pressable
           onPress={handleSave}
-          disabled={!canSave}
+          disabled={!canSave || saveLoading}
           className="active:opacity-70"
         >
-          <Text
-            className={`text-sm font-semibold ${
-              canSave ? "text-orange-500" : "text-slate-400"
-            }`}
-          >
-            Save
-          </Text>
+          {saveLoading ? (
+            <ActivityIndicator size="small" color="#E8613C" />
+          ) : (
+            <Text
+              className={`text-sm font-semibold ${
+                canSave ? "text-orange-500" : "text-slate-400"
+              }`}
+            >
+              Save
+            </Text>
+          )}
         </Pressable>
       </View>
 

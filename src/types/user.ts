@@ -31,7 +31,26 @@ export const userProfileSchema = z.object({
   cityFeel: z.string().default(''),
   childCount: z.number().default(0),
   isExpecting: z.boolean().default(false),
-  dueDate: z.string().nullable().default(null),
+  dueDate: z
+    .union([
+      z.object({ month: z.number(), year: z.number() }),
+      z.string()
+    ])
+    .nullable()
+    .default(null)
+    .transform((val) => {
+      if (val == null) return null;
+      if (typeof val === 'string') {
+        const parts = val.split(/[-/]/).map((p) => Number.parseInt(p, 10));
+        if (parts.length < 2 || parts.some(Number.isNaN)) return null;
+        const [a, b] = parts;
+        const month = a <= 12 ? a : b;
+        const year = a <= 12 ? b : a;
+        if (month < 1 || month > 12 || year < 1900) return null;
+        return { month, year };
+      }
+      return val;
+    }),
   children: z.array(z.unknown()).default([]),
   beforeMotherhood: z.array(z.unknown()).default([]),
   perfectWeekend: z.array(z.unknown()).default([]),

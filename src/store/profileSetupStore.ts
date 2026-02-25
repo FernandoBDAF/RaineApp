@@ -31,17 +31,6 @@ interface ProfileSetupStore extends ProfileSetupData {
   syncFromUserProfile: (profile: UserProfile) => void;
 }
 
-function parseDueDate(value: string | null): DueDate | null {
-  if (!value || typeof value !== 'string') return null;
-  const parts = value.split(/[-/]/).map((p) => Number.parseInt(p, 10));
-  if (parts.length < 2 || parts.some(Number.isNaN)) return null;
-  const [a, b] = parts;
-  const month = a <= 12 ? a : b;
-  const year = a <= 12 ? b : a;
-  if (month < 1 || month > 12 || year < 1900) return null;
-  return { month, year };
-}
-
 const initialState: ProfileSetupData = {
   firstName: '',
   lastInitial: '',
@@ -104,7 +93,7 @@ export const useProfileSetupStore = create<ProfileSetupStore>()(
           cityFeel: (profile.cityFeel as ProfileSetupData['cityFeel']) || null,
           childCount: profile.childCount ?? 0,
           isExpecting: profile.isExpecting ?? false,
-          dueDate: parseDueDate(profile.dueDate),
+          dueDate: profile.dueDate,
           children: (profile.children as Child[]) ?? [],
           beforeMotherhood:
             (profile.beforeMotherhood as ProfileSetupData['beforeMotherhood']) ?? [],

@@ -23,7 +23,7 @@ export default function ProfileSetupLayout() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-      <View className="flex-row items-center px-2">
+      <View className="flex-row items-center px-2 pt-4">
         {canGoBack ? (
           <TouchableOpacity onPress={handleBack} className="w-10 h-10 items-center justify-center">
             <Ionicons name="chevron-back" size={24} color="#334155" />

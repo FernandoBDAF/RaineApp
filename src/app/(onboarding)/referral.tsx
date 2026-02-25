@@ -87,7 +87,7 @@ export default function ReferralScreen() {
       )}
       <TouchableOpacity
         onPress={() => router.replace('/(auth)/login')}
-        className="absolute left-4 top-10 z-10 h-10 w-10 items-center justify-center"
+        className="absolute left-4 top-16 z-10 h-10 w-10 items-center justify-center"
         accessibilityLabel="Voltar ao login"
       >
         <Ionicons name="chevron-back" size={28} color="white" />

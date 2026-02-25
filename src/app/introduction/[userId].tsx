@@ -26,7 +26,7 @@ export default function ProfileDetailScreen() {
       {/* Back button */}
       <Pressable
         onPress={() => router.back()}
-        className="absolute left-4 top-14 z-10 h-10 w-10 items-center justify-center rounded-full bg-white/80"
+        className="absolute left-4 top-16 z-10 h-10 w-10 items-center justify-center rounded-full bg-white/80"
       >
         <Text className="text-lg text-slate-700">←</Text>
       </Pressable>
