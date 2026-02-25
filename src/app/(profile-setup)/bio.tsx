@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useShallow } from 'zustand/react/shallow';
 import { ContinueButton } from '../../components/profile-setup/ContinueButton';
@@ -12,6 +13,7 @@ import { useAuth } from '../../context/auth/AuthContext';
 
 export default function BioScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -99,7 +101,7 @@ export default function BioScreen() {
         profileSetupCompletedAt
       });
       completeSetup(profileSetupCompletedAt);
-      console.log(profileSetupCompletedAt);
+      queryClient.invalidateQueries({ queryKey: ['getUserProfile'] });
       router.replace('/welcome/welcome');
     } finally {
       setSubmitting(false);

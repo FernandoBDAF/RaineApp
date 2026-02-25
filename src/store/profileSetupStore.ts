@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { mmkvStorage } from './persist';
-import type { Child, DueDate, ProfileSetupData } from '../types/profile-setup';
+import type { Child, ProfileSetupData } from '../types/profile-setup';
 import type { UserProfile } from '../types/user';
+import { mmkvStorage } from './persist';
 
 interface ProfileSetupStore extends ProfileSetupData {
   setName: (firstName: string, lastInitial: string) => void;

@@ -31,8 +31,8 @@ export default function PhotoScreen() {
           compress: 0.8,
           format: SaveFormat.JPEG
         });
-        const remoteUrl = await uploadProfilePhoto(user.uid, manipulated.uri);
-        setPhoto(remoteUrl);
+        // const remoteUrl = await uploadProfilePhoto(user.uid, manipulated.uri);
+        setPhoto(manipulated.uri);
       } finally {
         setLoading(false);
       }
