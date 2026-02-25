@@ -5,6 +5,7 @@ import { getJson, setJson, storageKeys } from '../../cache/mmkv';
 import { resetPassword, signIn, signOut, signUp } from '../../services/firebase/auth';
 import { getUserProfile, waitForUserProfile } from '../../services/firebase/users';
 import { useProfileSetupStore } from '../../store/profileSetupStore';
+import { uploadProfilePhoto } from '../../services/profile';
 
 export interface AuthUser {
   uid: string;
@@ -56,8 +57,19 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
           setJson(storageKeys.authUser, mapped);
 
           const profile = await getUserProfile(firebaseUser.uid);
-          if (profile) {
+          if (profile?.profileSetupCompletedAt) {
+            // Profile setup is complete — Firestore is source of truth
+            if (profile.photoURL) {
+              await uploadProfilePhoto(firebaseUser.uid, profile.photoURL);
+            }
             syncFromUserProfile(profile);
+          } else if (profile) {
+            // User is mid-setup — keep local persisted data, only set photo from auth if missing
+            const setPhoto = useProfileSetupStore.getState().setPhoto;
+            const currentPhoto = useProfileSetupStore.getState().photoURL;
+            if (firebaseUser.photoURL && !currentPhoto) {
+              setPhoto(firebaseUser.photoURL);
+            }
           } else {
             const setPhoto = useProfileSetupStore.getState().setPhoto;
             if (firebaseUser.photoURL) {

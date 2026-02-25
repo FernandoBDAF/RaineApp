@@ -18,6 +18,9 @@ const RootLayoutContent = () => {
   const router = useRouter();
   const segments = useSegments();
   const currentStep = useProfileSetupStore((state) => state.currentStep);
+  const storeProfileSetupCompletedAt = useProfileSetupStore(
+    (state) => state.profileSetupCompletedAt
+  );
   const [appReady, setAppReady] = useState(false);
 
   const { data: profile } = useQuery({
@@ -26,7 +29,8 @@ const RootLayoutContent = () => {
     enabled: !!user?.uid
   });
 
-  const profileCompleted = !!profile?.profileSetupCompletedAt;
+  const profileCompleted =
+    !!profile?.profileSetupCompletedAt || !!storeProfileSetupCompletedAt;
 
   useEffect(() => {
     initRemoteConfig();
