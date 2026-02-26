@@ -1,11 +1,10 @@
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { auth } from '../../services/firebase/firebase';
 import { getJson, setJson, storageKeys } from '../../cache/mmkv';
 import { resetPassword, signIn, signOut, signUp } from '../../services/firebase/auth';
+import { auth } from '../../services/firebase/firebase';
 import { getUserProfile, waitForUserProfile } from '../../services/firebase/users';
 import { useProfileSetupStore } from '../../store/profileSetupStore';
-import { uploadProfilePhoto } from '../../services/profile';
 
 export interface AuthUser {
   uid: string;
@@ -52,6 +51,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     const unsubscribe = auth().onAuthStateChanged(async (firebaseUser) => {
       try {
         if (firebaseUser) {
+          setIsLoading(true);
           const mapped = mapUser(firebaseUser);
           setUser(mapped);
           setJson(storageKeys.authUser, mapped);
@@ -59,9 +59,6 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
           const profile = await getUserProfile(firebaseUser.uid);
           if (profile?.profileSetupCompletedAt) {
             // Profile setup is complete — Firestore is source of truth
-            // if (profile.photoURL !== undefined) {
-            //   await uploadProfilePhoto(firebaseUser.uid, profile.photoURL);
-            // }
             syncFromUserProfile(profile);
           } else if (profile) {
             // User is mid-setup — keep local persisted data, only set photo from auth if missing

@@ -23,7 +23,7 @@ function getChildAge(birthMonth: number, birthYear: number): string {
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { logout, user } = useAuth();
+  const { logout } = useAuth();
 
   const firstName = useProfileSetupStore((s) => s.firstName);
   const lastInitial = useProfileSetupStore((s) => s.lastInitial);
@@ -40,7 +40,7 @@ export default function ProfileScreen() {
   const momFriendStyle = useProfileSetupStore((s) => s.momFriendStyle);
 
   const displayName = `${firstName} ${lastInitial}.`;
-  const displayPhoto = photoURL || user?.photoURL;
+  const displayPhoto = photoURL ?? '';
 
   const handleSignOut = async () => {
     await logout();

@@ -2,10 +2,13 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Child, ProfileSetupData } from '../types/profile-setup';
 import type { UserProfile } from '../types/user';
+import { getUserProfile } from '../services/firebase/users';
 import { mmkvStorage } from './persist';
 
 interface ProfileSetupStore extends ProfileSetupData {
+  displayName: string;
   setName: (firstName: string, lastInitial: string) => void;
+  setDisplayName: (displayName: string) => void;
   setPhoto: (photoURL: string) => void;
   setLocation: (zipCode: string, city: string, state: string, county: string) => void;
   setCityFeel: (cityFeel: ProfileSetupData['cityFeel']) => void;
@@ -29,9 +32,11 @@ interface ProfileSetupStore extends ProfileSetupData {
   completeSetup: (profileSetupCompletedAt: string) => void;
   reset: () => void;
   syncFromUserProfile: (profile: UserProfile) => void;
+  syncFromFirestore: (uid: string) => Promise<void>;
 }
 
-const initialState: ProfileSetupData = {
+const initialState: ProfileSetupData & { displayName: string } = {
+  displayName: '',
   firstName: '',
   lastInitial: '',
   photoURL: '',
@@ -62,6 +67,7 @@ export const useProfileSetupStore = create<ProfileSetupStore>()(
   persist(
     (set) => ({
       ...initialState,
+      setDisplayName: (displayName) => set({ displayName }),
       setName: (firstName, lastInitial) => set({ firstName, lastInitial }),
       setPhoto: (photoURL) => set({ photoURL }),
       setLocation: (zipCode, city, state, county) => set({ zipCode, city, state, county }),
@@ -83,6 +89,7 @@ export const useProfileSetupStore = create<ProfileSetupStore>()(
       reset: () => set(initialState),
       syncFromUserProfile: (profile) =>
         set({
+          displayName: profile.displayName ?? '',
           firstName: profile.firstName ?? '',
           lastInitial: profile.lastInitial ?? '',
           photoURL: profile.photoURL ?? '',
@@ -107,7 +114,13 @@ export const useProfileSetupStore = create<ProfileSetupStore>()(
           generatedBio: profile.generatedBio ?? '',
           bioApproved: profile.bioApproved ?? false,
           profileSetupCompletedAt: profile.profileSetupCompletedAt?.toDate().toISOString() ?? null
-        })
+        }),
+      syncFromFirestore: async (uid) => {
+        const profile = await getUserProfile(uid);
+        if (profile) {
+          useProfileSetupStore.getState().syncFromUserProfile(profile);
+        }
+      }
     }),
     {
       name: 'profile-setup',

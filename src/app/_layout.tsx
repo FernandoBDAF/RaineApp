@@ -1,12 +1,11 @@
 import '../../global.css';
 
-import { QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { SplashScreen, Stack, useRouter, usePathname, useSegments } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { STEP_TO_ROUTE } from '../constants/profile-options';
 import { AuthProvider, useAuth } from '../context/auth/AuthContext';
 import { initRemoteConfig } from '../services/firebase/remoteConfig';
-import { getUserProfile } from '../services/firebase/users';
 import { queryClient } from '../services/queryClient';
 import { useProfileSetupStore } from '../store/profileSetupStore';
 
@@ -14,25 +13,17 @@ import { useProfileSetupStore } from '../store/profileSetupStore';
 SplashScreen.preventAutoHideAsync();
 
 const RootLayoutContent = () => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const segments = useSegments();
   const currentStep = useProfileSetupStore((state) => state.currentStep);
-  const storeProfileSetupCompletedAt = useProfileSetupStore(
+  const profileSetupCompletedAt = useProfileSetupStore(
     (state) => state.profileSetupCompletedAt
   );
   const [appReady, setAppReady] = useState(false);
 
-  const { data: profile, isFetched: isProfileFetched } = useQuery({
-    queryKey: ['getUserProfile', user?.uid],
-    queryFn: () => (user?.uid ? getUserProfile(user.uid) : null),
-    enabled: !!user?.uid
-  });
-
-  const profileCompleted = !!profile?.profileSetupCompletedAt || !!storeProfileSetupCompletedAt;
-
-  const needsProfileToDecide = isAuthenticated && !!user?.uid && !isProfileFetched;
+  const profileCompleted = !!profileSetupCompletedAt;
   const lastRedirectRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -43,18 +34,15 @@ const RootLayoutContent = () => {
     if (isLoading) {
       return;
     }
-    if (needsProfileToDecide) {
-      return;
-    }
     SplashScreen.hideAsync();
     setAppReady(true);
-  }, [isLoading, needsProfileToDecide]);
+  }, [isLoading]);
 
   useEffect(() => {
     if (!appReady) {
       return;
     }
-    if (needsProfileToDecide) {
+    if (isLoading) {
       return;
     }
 
@@ -104,7 +92,7 @@ const RootLayoutContent = () => {
         router.replace('/(tabs)');
       }
     }
-  }, [appReady, currentStep, isAuthenticated, needsProfileToDecide, pathname, profileCompleted, router, segments]);
+  }, [appReady, currentStep, isLoading, isAuthenticated, pathname, profileCompleted, router, segments]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
