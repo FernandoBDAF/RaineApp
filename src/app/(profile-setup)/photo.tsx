@@ -6,7 +6,6 @@ import { ContinueButton } from '../../components/profile-setup/ContinueButton';
 import { PhotoUpload } from '../../components/profile-setup/PhotoUpload';
 import { SetupHeader } from '../../components/profile-setup/SetupHeader';
 import { useAuth } from '../../context/auth/AuthContext';
-import { uploadProfilePhoto } from '../../services/profile';
 import { useProfileSetupStore } from '../../store/profileSetupStore';
 
 export default function PhotoScreen() {
@@ -31,7 +30,6 @@ export default function PhotoScreen() {
           compress: 0.8,
           format: SaveFormat.JPEG
         });
-        // const remoteUrl = await uploadProfilePhoto(user.uid, manipulated.uri);
         setPhoto(manipulated.uri);
       } finally {
         setLoading(false);

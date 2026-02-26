@@ -59,9 +59,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
           const profile = await getUserProfile(firebaseUser.uid);
           if (profile?.profileSetupCompletedAt) {
             // Profile setup is complete — Firestore is source of truth
-            if (profile.photoURL) {
-              await uploadProfilePhoto(firebaseUser.uid, profile.photoURL);
-            }
+            // if (profile.photoURL !== undefined) {
+            //   await uploadProfilePhoto(firebaseUser.uid, profile.photoURL);
+            // }
             syncFromUserProfile(profile);
           } else if (profile) {
             // User is mid-setup — keep local persisted data, only set photo from auth if missing

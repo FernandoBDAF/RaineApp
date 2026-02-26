@@ -60,10 +60,9 @@ export default function SignupScreen() {
 
       await register(normalizedEmail, password);
 
-      // Reset profile setup and navigate to name step
+      // Reset profile setup; _layout will redirect to profile-setup/name
       resetProfileSetup();
       setCurrentStep(1);
-      router.replace('/(profile-setup)/name');
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;
       setError(
