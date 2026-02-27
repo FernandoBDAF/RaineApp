@@ -32,10 +32,7 @@ export const userProfileSchema = z.object({
   childCount: z.number().default(0),
   isExpecting: z.boolean().default(false),
   dueDate: z
-    .union([
-      z.object({ month: z.number(), year: z.number() }),
-      z.string()
-    ])
+    .union([z.object({ month: z.number(), year: z.number() }), z.string()])
     .nullable()
     .default(null)
     .transform((val) => {
@@ -51,7 +48,9 @@ export const userProfileSchema = z.object({
       }
       return val;
     }),
-  children: z.array(z.unknown()).default([]),
+  children: z
+    .array(z.object({ name: z.string(), birthMonth: z.number(), birthYear: z.number() }))
+    .default([]),
   beforeMotherhood: z.array(z.unknown()).default([]),
   perfectWeekend: z.array(z.unknown()).default([]),
   feelYourself: z.unknown().nullable().default(null),

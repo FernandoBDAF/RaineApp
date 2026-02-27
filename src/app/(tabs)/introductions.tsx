@@ -1,7 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardAvoidingView, ScrollView, View } from 'react-native';
 import { ConversationRow } from '../../components/introductions/ConversationRow';
 import { IntroductionsHeader } from '../../components/introductions/IntroductionsHeader';
 import { MomsLikeYouCarousel } from '../../components/introductions/MomsLikeYouCarousel';
@@ -11,6 +10,7 @@ import { SearchBar } from '../../components/shared/SearchBar';
 import { SectionHeader } from '../../components/shared/SectionHeader';
 import { SortPills } from '../../components/shared/SortPills';
 import { TabSwitcher } from '../../components/shared/TabSwitcher';
+import { useAuth } from '../../context/auth/AuthContext';
 import {
   getActiveConversations,
   getLastMessage,
@@ -18,9 +18,8 @@ import {
   getPendingRequests,
   getSavedConnections
 } from '../../services/introductions';
-import { useAuth } from '../../context/auth/AuthContext';
-import { useMomsLikeYouStore } from '../../store/momsLikeYouStore';
 import { useIntroductionsStore } from '../../store/introductionsStore';
+import { useMomsLikeYouStore } from '../../store/momsLikeYouStore';
 import type { Introduction, SavedConnection } from '../../types/introduction';
 
 type SortOption = 'recent' | 'a-z';
@@ -173,7 +172,11 @@ export default function IntroductionsScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+    <KeyboardAvoidingView
+      className="flex-1 bg-white"
+      behavior="padding"
+      keyboardVerticalOffset={50}
+    >
       <IntroductionsHeader />
 
       <ScrollView
@@ -195,11 +198,7 @@ export default function IntroductionsScreen() {
           <View className="mt-4">
             <SectionHeader title="MOMS LIKE YOU" />
             <View className="mt-2">
-              <MomsLikeYouCarousel
-                uid={uid}
-                onSayHi={handleSayHi}
-                onSave={handleSave}
-              />
+              <MomsLikeYouCarousel uid={uid} onSayHi={handleSayHi} onSave={handleSave} />
             </View>
           </View>
         )}
@@ -240,6 +239,6 @@ export default function IntroductionsScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
