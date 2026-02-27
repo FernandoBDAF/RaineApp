@@ -1,26 +1,26 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { FlatList, Text, View } from "react-native";
-import { useRouter } from "expo-router";
-import { useIntroductionsStore } from "../../store/introductionsStore";
+import React, { useCallback, useEffect, useState } from 'react';
+import { ScrollView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useIntroductionsStore } from '../../store/introductionsStore';
 import {
   getMatchProfiles,
   getActiveConversations,
   getSavedConnections,
   getPendingRequests,
   getPendingProfiles,
-  getLastMessage,
-} from "../../services/introductions";
-import { TabSwitcher } from "../../components/shared/TabSwitcher";
-import { SearchBar } from "../../components/shared/SearchBar";
-import { SortPills } from "../../components/shared/SortPills";
-import { SectionHeader } from "../../components/shared/SectionHeader";
-import { MomsLikeYouCarousel } from "../../components/introductions/MomsLikeYouCarousel";
-import { PendingBanner } from "../../components/introductions/PendingBanner";
-import { ConversationRow } from "../../components/introductions/ConversationRow";
-import { SavedConnectionCard } from "../../components/introductions/SavedConnectionCard";
-import type { Introduction, SavedConnection } from "../../types/introduction";
+  getLastMessage
+} from '../../services/introductions';
+import { TabSwitcher } from '../../components/shared/TabSwitcher';
+import { SearchBar } from '../../components/shared/SearchBar';
+import { SortPills } from '../../components/shared/SortPills';
+import { SectionHeader } from '../../components/shared/SectionHeader';
+import { MomsLikeYouCarousel } from '../../components/introductions/MomsLikeYouCarousel';
+import { PendingBanner } from '../../components/introductions/PendingBanner';
+import { ConversationRow } from '../../components/introductions/ConversationRow';
+import { SavedConnectionCard } from '../../components/introductions/SavedConnectionCard';
+import type { Introduction, SavedConnection } from '../../types/introduction';
 
-type SortOption = "recent" | "a-z";
+type SortOption = 'recent' | 'a-z';
 
 export default function IntroductionsScreen() {
   const router = useRouter();
@@ -33,13 +33,13 @@ export default function IntroductionsScreen() {
     setSavedConnections,
     setPendingRequests,
     setRecommendedProfiles,
-    removeSavedConnection,
+    removeSavedConnection
   } = useIntroductionsStore();
 
-  const [activeTab, setActiveTab] = useState("active");
-  const [searchActive, setSearchActive] = useState("");
-  const [searchSaved, setSearchSaved] = useState("");
-  const [sortOption, setSortOption] = useState<SortOption>("recent");
+  const [activeTab, setActiveTab] = useState('active');
+  const [searchActive, setSearchActive] = useState('');
+  const [searchSaved, setSearchSaved] = useState('');
+  const [sortOption, setSortOption] = useState<SortOption>('recent');
 
   // Load mock data on mount
   useEffect(() => {
@@ -63,14 +63,16 @@ export default function IntroductionsScreen() {
   const filteredActive = activeConversations
     .filter((intro) => {
       if (!searchActive) return true;
-      const otherUserId = intro.fromUserId === "me" ? intro.toUserId : intro.fromUserId;
+      const otherUserId = intro.fromUserId === 'me' ? intro.toUserId : intro.fromUserId;
       const profile = profileMap[otherUserId];
       return profile?.firstName.toLowerCase().includes(searchActive.toLowerCase());
     })
     .sort((a, b) => {
-      if (sortOption === "a-z") {
-        const nameA = profileMap[a.fromUserId === "me" ? a.toUserId : a.fromUserId]?.firstName ?? "";
-        const nameB = profileMap[b.fromUserId === "me" ? b.toUserId : b.fromUserId]?.firstName ?? "";
+      if (sortOption === 'a-z') {
+        const nameA =
+          profileMap[a.fromUserId === 'me' ? a.toUserId : a.fromUserId]?.firstName ?? '';
+        const nameB =
+          profileMap[b.fromUserId === 'me' ? b.toUserId : b.fromUserId]?.firstName ?? '';
         return nameA.localeCompare(nameB);
       }
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -102,7 +104,7 @@ export default function IntroductionsScreen() {
         bio: profile.bio,
         mutualCommunities: 0,
         matchDescription: profile.matchDescription,
-        savedAt: new Date(),
+        savedAt: new Date()
       });
     },
     [profileMap]
@@ -125,13 +127,13 @@ export default function IntroductionsScreen() {
   );
 
   const tabs = [
-    { id: "active", label: "Active", count: activeConversations.length },
-    { id: "saved", label: "Saved", count: savedConnections.length },
+    { id: 'active', label: 'Active', count: activeConversations.length },
+    { id: 'saved', label: 'Saved', count: savedConnections.length }
   ];
 
   const renderActiveItem = useCallback(
     ({ item }: { item: Introduction }) => {
-      const otherUserId = item.fromUserId === "me" ? item.toUserId : item.fromUserId;
+      const otherUserId = item.fromUserId === 'me' ? item.toUserId : item.fromUserId;
       const profile = profileMap[otherUserId];
       const lastMsg = item.roomId ? getLastMessage(item.roomId) : undefined;
       if (!profile) return null;
@@ -160,16 +162,17 @@ export default function IntroductionsScreen() {
   );
 
   return (
-    <View className="flex-1 bg-white pt-16">
+    <ScrollView
+      className="flex-1 bg-white"
+      contentContainerStyle={{ paddingTop: 64, paddingBottom: 24 }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Header */}
       <View className="px-6">
         <Text className="text-xs font-semibold tracking-widest text-orange-500 uppercase">
           YOUR
         </Text>
-        <Text
-          className="text-3xl text-slate-900"
-          style={{ fontFamily: "serif" }}
-        >
+        <Text className="text-3xl text-slate-900" style={{ fontFamily: 'serif' }}>
           Introductions
         </Text>
         <View className="mt-2 h-px bg-orange-500" />
@@ -180,7 +183,7 @@ export default function IntroductionsScreen() {
         <PendingBanner
           count={pendingRequests.length}
           avatars={pendingAvatars}
-          onPress={() => router.push("/introduction/pending" as never)}
+          onPress={() => router.push('/introduction/pending' as never)}
         />
       )}
 
@@ -200,46 +203,35 @@ export default function IntroductionsScreen() {
 
       {/* Tab Switcher */}
       <View className="mt-4">
-        <TabSwitcher
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
+        <TabSwitcher tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
       </View>
 
       {/* Tab content */}
-      {activeTab === "active" ? (
-        <View className="flex-1">
+      {activeTab === 'active' ? (
+        <View className="mt-4">
           <SearchBar
             placeholder="SEARCH CONVERSATIONS"
             value={searchActive}
             onChangeText={setSearchActive}
           />
           <SortPills selected={sortOption} onSelect={setSortOption} />
-          <FlatList
-            data={filteredActive}
-            keyExtractor={(item) => item.id}
-            renderItem={renderActiveItem}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 24 }}
-          />
+          <View className="gap-0">
+            {filteredActive.map((item) => {
+              const element = renderActiveItem({ item });
+              return element ? <View key={item.id}>{element}</View> : null;
+            })}
+          </View>
         </View>
       ) : (
-        <View className="flex-1">
-          <SearchBar
-            placeholder="SEARCH SAVED"
-            value={searchSaved}
-            onChangeText={setSearchSaved}
-          />
-          <FlatList
-            data={filteredSaved}
-            keyExtractor={(item) => item.userId}
-            renderItem={renderSavedItem}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}
-          />
+        <View className="mt-4">
+          <SearchBar placeholder="SEARCH SAVED" value={searchSaved} onChangeText={setSearchSaved} />
+          <View className="mt-2 gap-4">
+            {filteredSaved.map((item) => (
+              <View key={item.userId}>{renderSavedItem({ item })}</View>
+            ))}
+          </View>
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 }

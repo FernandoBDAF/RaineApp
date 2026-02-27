@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { useShallow } from 'zustand/react/shallow';
 import { ProfileTagList } from '../../components/profile/ProfileTagList';
 import { useAuth } from '../../context/auth/AuthContext';
 import { useProfileSetupStore } from '../../store/profileSetupStore';
@@ -25,19 +26,37 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { logout } = useAuth();
 
-  const firstName = useProfileSetupStore((s) => s.firstName);
-  const lastInitial = useProfileSetupStore((s) => s.lastInitial);
-  const photoURL = useProfileSetupStore((s) => s.photoURL);
-  const city = useProfileSetupStore((s) => s.city);
-  const state = useProfileSetupStore((s) => s.state);
-  const generatedBio = useProfileSetupStore((s) => s.generatedBio);
-  const children = useProfileSetupStore((s) => s.children);
-  const isExpecting = useProfileSetupStore((s) => s.isExpecting);
-  const dueDate = useProfileSetupStore((s) => s.dueDate);
-  const beforeMotherhood = useProfileSetupStore((s) => s.beforeMotherhood);
-  const perfectWeekend = useProfileSetupStore((s) => s.perfectWeekend);
-  const aesthetic = useProfileSetupStore((s) => s.aesthetic);
-  const momFriendStyle = useProfileSetupStore((s) => s.momFriendStyle);
+  const {
+    firstName,
+    lastInitial,
+    photoURL,
+    city,
+    state,
+    generatedBio,
+    children,
+    isExpecting,
+    dueDate,
+    beforeMotherhood,
+    perfectWeekend,
+    aesthetic,
+    momFriendStyle
+  } = useProfileSetupStore(
+    useShallow((s) => ({
+      firstName: s.firstName,
+      lastInitial: s.lastInitial,
+      photoURL: s.photoURL,
+      city: s.city,
+      state: s.state,
+      generatedBio: s.generatedBio,
+      children: s.children,
+      isExpecting: s.isExpecting,
+      dueDate: s.dueDate,
+      beforeMotherhood: s.beforeMotherhood,
+      perfectWeekend: s.perfectWeekend,
+      aesthetic: s.aesthetic,
+      momFriendStyle: s.momFriendStyle
+    }))
+  );
 
   const displayName = `${firstName} ${lastInitial}.`;
   const displayPhoto = photoURL ?? '';
