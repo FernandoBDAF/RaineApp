@@ -62,6 +62,7 @@ export type WhatBroughtYou =
   | 'deeper_connections';
 
 export interface ProfileSetupData {
+  uid: string;
   firstName: string;
   lastInitial: string;
   photoURL: string;

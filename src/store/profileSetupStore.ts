@@ -36,6 +36,7 @@ interface ProfileSetupStore extends ProfileSetupData {
 }
 
 const initialState: ProfileSetupData & { displayName: string } = {
+  uid: '',
   displayName: '',
   firstName: '',
   lastInitial: '',
@@ -67,6 +68,7 @@ export const useProfileSetupStore = create<ProfileSetupStore>()(
   persist(
     (set) => ({
       ...initialState,
+      setUid: (uid: string) => set({ uid }),
       setDisplayName: (displayName) => set({ displayName }),
       setName: (firstName, lastInitial) => set({ firstName, lastInitial }),
       setPhoto: (photoURL) => set({ photoURL }),
@@ -89,6 +91,7 @@ export const useProfileSetupStore = create<ProfileSetupStore>()(
       reset: () => set(initialState),
       syncFromUserProfile: (profile) =>
         set({
+          uid: profile.uid ?? '',
           displayName: profile.displayName ?? '',
           firstName: profile.firstName ?? '',
           lastInitial: profile.lastInitial ?? '',

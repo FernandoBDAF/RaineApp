@@ -3,7 +3,8 @@ import { isFirebaseMockMode, config } from '../../config/environment';
 const defaultFlags = {
   chatReactionsEnabled: true,
   newProfileUIEnabled: false,
-  subscriptionGatingEnabled: true
+  subscriptionGatingEnabled: true,
+  momsLikeYouEnabled: true
 };
 
 // In-memory cache for feature flags

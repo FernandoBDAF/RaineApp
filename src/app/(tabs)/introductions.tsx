@@ -1,40 +1,44 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useIntroductionsStore } from '../../store/introductionsStore';
-import {
-  getMatchProfiles,
-  getActiveConversations,
-  getSavedConnections,
-  getPendingRequests,
-  getPendingProfiles,
-  getLastMessage
-} from '../../services/introductions';
-import { TabSwitcher } from '../../components/shared/TabSwitcher';
-import { SearchBar } from '../../components/shared/SearchBar';
-import { SortPills } from '../../components/shared/SortPills';
-import { SectionHeader } from '../../components/shared/SectionHeader';
+import { useCallback, useEffect, useState } from 'react';
+import { ScrollView, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ConversationRow } from '../../components/introductions/ConversationRow';
+import { IntroductionsHeader } from '../../components/introductions/IntroductionsHeader';
 import { MomsLikeYouCarousel } from '../../components/introductions/MomsLikeYouCarousel';
 import { PendingBanner } from '../../components/introductions/PendingBanner';
-import { ConversationRow } from '../../components/introductions/ConversationRow';
 import { SavedConnectionCard } from '../../components/introductions/SavedConnectionCard';
+import { SearchBar } from '../../components/shared/SearchBar';
+import { SectionHeader } from '../../components/shared/SectionHeader';
+import { SortPills } from '../../components/shared/SortPills';
+import { TabSwitcher } from '../../components/shared/TabSwitcher';
+import {
+  getActiveConversations,
+  getLastMessage,
+  getPendingProfiles,
+  getPendingRequests,
+  getSavedConnections
+} from '../../services/introductions';
+import { useAuth } from '../../context/auth/AuthContext';
+import { useMomsLikeYouStore } from '../../store/momsLikeYouStore';
+import { useIntroductionsStore } from '../../store/introductionsStore';
 import type { Introduction, SavedConnection } from '../../types/introduction';
 
 type SortOption = 'recent' | 'a-z';
 
 export default function IntroductionsScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const uid = user?.uid;
   const {
     activeConversations,
     savedConnections,
     pendingRequests,
-    recommendedProfiles,
     setActiveConversations,
     setSavedConnections,
     setPendingRequests,
-    setRecommendedProfiles,
     removeSavedConnection
   } = useIntroductionsStore();
+  const momsLikeYouProfiles = useMomsLikeYouStore((s) => s.profiles);
 
   const [activeTab, setActiveTab] = useState('active');
   const [searchActive, setSearchActive] = useState('');
@@ -43,15 +47,22 @@ export default function IntroductionsScreen() {
 
   // Load mock data on mount
   useEffect(() => {
-    setRecommendedProfiles(getMatchProfiles());
     setActiveConversations(getActiveConversations());
     setSavedConnections(getSavedConnections());
     setPendingRequests(getPendingRequests());
-  }, [setRecommendedProfiles, setActiveConversations, setSavedConnections, setPendingRequests]);
+  }, [setActiveConversations, setSavedConnections, setPendingRequests]);
 
-  // Build profile lookup from all profiles
+  // Build profile lookup: moms from store (uid→userId) + pending profiles
   const pendingProfiles = getPendingProfiles();
-  const allProfiles = [...recommendedProfiles, ...pendingProfiles];
+  const momsAsProfiles = momsLikeYouProfiles.map((p) => ({
+    userId: p.uid,
+    firstName: p.firstName,
+    lastInitial: p.lastInitial,
+    photoURL: p.photoURL ?? '',
+    bio: '',
+    matchDescription: ''
+  }));
+  const allProfiles = [...momsAsProfiles, ...pendingProfiles];
   const profileMap = Object.fromEntries(allProfiles.map((p) => [p.userId, p]));
 
   // Pending avatars
@@ -162,76 +173,73 @@ export default function IntroductionsScreen() {
   );
 
   return (
-    <ScrollView
-      className="flex-1 bg-white"
-      contentContainerStyle={{ paddingTop: 64, paddingBottom: 24 }}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Header */}
-      <View className="px-6">
-        <Text className="text-xs font-semibold tracking-widest text-orange-500 uppercase">
-          YOUR
-        </Text>
-        <Text className="text-3xl text-slate-900" style={{ fontFamily: 'serif' }}>
-          Introductions
-        </Text>
-        <View className="mt-2 h-px bg-orange-500" />
-      </View>
+    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+      <IntroductionsHeader />
 
-      {/* Pending Banner */}
-      {pendingRequests.length > 0 && (
-        <PendingBanner
-          count={pendingRequests.length}
-          avatars={pendingAvatars}
-          onPress={() => router.push('/introduction/pending' as never)}
-        />
-      )}
-
-      {/* Moms Like You carousel */}
-      {recommendedProfiles.length > 0 && (
-        <View className="mt-4">
-          <SectionHeader title="MOMS LIKE YOU" />
-          <View className="mt-2">
-            <MomsLikeYouCarousel
-              profiles={recommendedProfiles}
-              onSayHi={handleSayHi}
-              onSave={handleSave}
-            />
-          </View>
-        </View>
-      )}
-
-      {/* Tab Switcher */}
-      <View className="mt-4">
-        <TabSwitcher tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
-      </View>
-
-      {/* Tab content */}
-      {activeTab === 'active' ? (
-        <View className="mt-4">
-          <SearchBar
-            placeholder="SEARCH CONVERSATIONS"
-            value={searchActive}
-            onChangeText={setSearchActive}
+      <ScrollView
+        className="flex-1 bg-white"
+        contentContainerStyle={{ paddingBottom: 24 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Pending Banner */}
+        {pendingRequests.length > 0 && (
+          <PendingBanner
+            count={pendingRequests.length}
+            avatars={pendingAvatars}
+            onPress={() => router.push('/introduction/pending' as never)}
           />
-          <SortPills selected={sortOption} onSelect={setSortOption} />
-          <View className="gap-0">
-            {filteredActive.map((item) => {
-              const element = renderActiveItem({ item });
-              return element ? <View key={item.id}>{element}</View> : null;
-            })}
+        )}
+
+        {/* Moms Like You carousel - shows all 5 from store */}
+        {momsLikeYouProfiles.length > 0 && (
+          <View className="mt-4">
+            <SectionHeader title="MOMS LIKE YOU" />
+            <View className="mt-2">
+              <MomsLikeYouCarousel
+                uid={uid}
+                onSayHi={handleSayHi}
+                onSave={handleSave}
+              />
+            </View>
           </View>
-        </View>
-      ) : (
+        )}
+
+        {/* Tab Switcher */}
         <View className="mt-4">
-          <SearchBar placeholder="SEARCH SAVED" value={searchSaved} onChangeText={setSearchSaved} />
-          <View className="mt-2 gap-4">
-            {filteredSaved.map((item) => (
-              <View key={item.userId}>{renderSavedItem({ item })}</View>
-            ))}
-          </View>
+          <TabSwitcher tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
         </View>
-      )}
-    </ScrollView>
+
+        {/* Tab content */}
+        {activeTab === 'active' ? (
+          <View className="mt-4">
+            <SearchBar
+              placeholder="SEARCH CONVERSATIONS"
+              value={searchActive}
+              onChangeText={setSearchActive}
+            />
+            <SortPills selected={sortOption} onSelect={setSortOption} />
+            <View className="gap-0">
+              {filteredActive.map((item) => {
+                const element = renderActiveItem({ item });
+                return element ? <View key={item.id}>{element}</View> : null;
+              })}
+            </View>
+          </View>
+        ) : (
+          <View className="mt-4">
+            <SearchBar
+              placeholder="SEARCH SAVED"
+              value={searchSaved}
+              onChangeText={setSearchSaved}
+            />
+            <View className="mt-2 gap-4">
+              {filteredSaved.map((item) => (
+                <View key={item.userId}>{renderSavedItem({ item })}</View>
+              ))}
+            </View>
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }

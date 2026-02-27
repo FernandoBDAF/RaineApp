@@ -1,78 +1,64 @@
-import { Tabs } from "expo-router";
-import { Text } from "react-native";
-import { useIntroductionsStore } from "../../store/introductionsStore";
+import { Tabs } from 'expo-router';
+import { Text } from 'react-native';
+import { useIntroductionsStore } from '../../store/introductionsStore';
 
 function TabIcon({ label, focused }: { label: string; focused: boolean }) {
   const icons: Record<string, string> = {
-    Home: "🏠",
-    Introductions: "👥",
-    Communities: "💬",
-    Drops: "📄",
+    Home: '🏠',
+    Introductions: '👥',
+    Communities: '💬',
+    Drops: '📄'
   };
-  return (
-    <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>
-      {icons[label] ?? "•"}
-    </Text>
-  );
+  return <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>{icons[label] ?? '•'}</Text>;
 }
 
 export default function TabsLayout() {
-  const pendingCount = useIntroductionsStore(
-    (state) => state.pendingRequests.length
-  );
+  const pendingCount = useIntroductionsStore((state) => state.pendingRequests.length);
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#E8613C",
-        tabBarInactiveTintColor: "#999999",
+        tabBarActiveTintColor: '#E8613C',
+        tabBarInactiveTintColor: '#999999',
         tabBarStyle: {
-          borderTopColor: "#E5E5E5",
-          borderTopWidth: 1,
+          borderTopColor: '#E5E5E5',
+          borderTopWidth: 1
         },
         tabBarLabelStyle: {
           fontSize: 10,
-          fontWeight: "600",
-          letterSpacing: 0.5,
-        },
+          fontWeight: '600',
+          letterSpacing: 0.5
+        }
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon label="Home" focused={focused} />
-          ),
+          title: 'Home',
+          tabBarIcon: ({ focused }) => <TabIcon label="Home" focused={focused} />
         }}
       />
       <Tabs.Screen
         name="introductions"
         options={{
-          title: "Introductions",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon label="Introductions" focused={focused} />
-          ),
-          tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
+          title: 'Introductions',
+          tabBarIcon: ({ focused }) => <TabIcon label="Introductions" focused={focused} />,
+          tabBarBadge: pendingCount > 0 ? pendingCount : undefined
         }}
       />
       <Tabs.Screen
         name="communities"
         options={{
-          title: "Communities",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon label="Communities" focused={focused} />
-          ),
+          title: 'Communities',
+          tabBarIcon: ({ focused }) => <TabIcon label="Communities" focused={focused} />
         }}
       />
       <Tabs.Screen
         name="drops"
         options={{
-          title: "Drops",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon label="Drops" focused={focused} />
-          ),
+          title: 'Drops',
+          tabBarIcon: ({ focused }) => <TabIcon label="Drops" focused={focused} />
         }}
       />
       {/* Hide old tabs from navigation */}
