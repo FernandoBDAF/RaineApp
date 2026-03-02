@@ -1,5 +1,6 @@
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
+import { getAvatarSource } from "../../constants/avatars";
 
 interface PendingBannerProps {
   count: number;
@@ -34,7 +35,7 @@ export const PendingBanner: React.FC<PendingBannerProps> = ({
             className="border-2 border-white overflow-hidden"
           >
             <Image
-              source={{ uri }}
+              source={getAvatarSource(uri)}
               style={{ width: 28, height: 28, borderRadius: 14 }}
             />
           </View>

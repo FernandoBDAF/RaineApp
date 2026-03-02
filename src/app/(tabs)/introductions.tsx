@@ -3,14 +3,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { KeyboardAvoidingView, ScrollView, View } from 'react-native';
 import { ConversationRow } from '../../components/introductions/ConversationRow';
 import { IntroductionsHeader } from '../../components/introductions/IntroductionsHeader';
-import { MomsLikeYouCarousel } from '../../components/introductions/MomsLikeYouCarousel';
 import { PendingBanner } from '../../components/introductions/PendingBanner';
 import { SavedConnectionCard } from '../../components/introductions/SavedConnectionCard';
 import { SearchBar } from '../../components/shared/SearchBar';
-import { SectionHeader } from '../../components/shared/SectionHeader';
 import { SortPills } from '../../components/shared/SortPills';
 import { TabSwitcher } from '../../components/shared/TabSwitcher';
 import { useAuth } from '../../context/auth/AuthContext';
+import { useConnectionsWithProfiles } from '../../hooks/useConnectionsWithProfiles';
 import {
   getActiveConversations,
   getLastMessage,
@@ -21,6 +20,7 @@ import {
 import { useIntroductionsStore } from '../../store/introductionsStore';
 import { useMomsLikeYouStore } from '../../store/momsLikeYouStore';
 import type { Introduction, SavedConnection } from '../../types/introduction';
+import { WHO_CONNECTED_VALUES } from '../../types/connection';
 
 type SortOption = 'recent' | 'a-z';
 
@@ -31,13 +31,14 @@ export default function IntroductionsScreen() {
   const {
     activeConversations,
     savedConnections,
-    pendingRequests,
     setActiveConversations,
     setSavedConnections,
     setPendingRequests,
     removeSavedConnection
   } = useIntroductionsStore();
   const momsLikeYouProfiles = useMomsLikeYouStore((s) => s.profiles);
+
+  const { connection, profileMapByUid: connectionProfileMap } = useConnectionsWithProfiles(uid);
 
   const [activeTab, setActiveTab] = useState('active');
   const [searchActive, setSearchActive] = useState('');
@@ -64,9 +65,18 @@ export default function IntroductionsScreen() {
   const allProfiles = [...momsAsProfiles, ...pendingProfiles];
   const profileMap = Object.fromEntries(allProfiles.map((p) => [p.userId, p]));
 
-  // Pending avatars
-  const pendingAvatars = pendingRequests
-    .map((r) => profileMap[r.fromUserId]?.photoURL)
+  // Avatares dos perfis das conexões (para o PendingBanner): apenas pedidos
+  // feitos por outros usuários ao logado (whoConnected === 'them') e ainda pendentes
+  const pendingIncomingDetails =
+    connection?.connectionDetailsList?.filter(
+      (d) =>
+        d.whoConnected === WHO_CONNECTED_VALUES.them &&
+        d.connectionAcceptedAt == null &&
+        d.connectionRejectedAt == null
+    ) ?? [];
+  const pendingIncomingUids = pendingIncomingDetails.map((d) => d.userConnectedUid);
+  const connectionAvatars = pendingIncomingUids
+    .map((id) => connectionProfileMap[id]?.photoURL)
     .filter(Boolean) as string[];
 
   // Filter & sort active conversations
@@ -101,24 +111,24 @@ export default function IntroductionsScreen() {
     [router]
   );
 
-  const handleSave = useCallback(
-    (userId: string) => {
-      const profile = profileMap[userId];
-      if (!profile) return;
-      const { addSavedConnection } = useIntroductionsStore.getState();
-      addSavedConnection({
-        userId: profile.userId,
-        firstName: profile.firstName,
-        lastInitial: profile.lastInitial,
-        photoURL: profile.photoURL,
-        bio: profile.bio,
-        mutualCommunities: 0,
-        matchDescription: profile.matchDescription,
-        savedAt: new Date()
-      });
-    },
-    [profileMap]
-  );
+  // const handleSave = useCallback(
+  //   (userId: string) => {
+  //     const profile = profileMap[userId];
+  //     if (!profile) return;
+  //     const { addSavedConnection } = useIntroductionsStore.getState();
+  //     addSavedConnection({
+  //       userId: profile.userId,
+  //       firstName: profile.firstName,
+  //       lastInitial: profile.lastInitial,
+  //       photoURL: profile.photoURL,
+  //       bio: profile.bio,
+  //       mutualCommunities: 0,
+  //       matchDescription: profile.matchDescription,
+  //       savedAt: new Date()
+  //     });
+  //   },
+  //   [profileMap]
+  // );
 
   const handleConversationPress = useCallback(
     (intro: Introduction) => {
@@ -185,23 +195,23 @@ export default function IntroductionsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Pending Banner */}
-        {pendingRequests.length > 0 && (
+        {pendingIncomingDetails.length > 0 && (
           <PendingBanner
-            count={pendingRequests.length}
-            avatars={pendingAvatars}
+            count={pendingIncomingDetails.length}
+            avatars={connectionAvatars}
             onPress={() => router.push('/introduction/pending' as never)}
           />
         )}
 
         {/* Moms Like You carousel - shows all 5 from store */}
-        {momsLikeYouProfiles.length > 0 && (
+        {/* {momsLikeYouProfiles.length > 0 && (
           <View className="mt-4">
             <SectionHeader title="MOMS LIKE YOU" />
             <View className="mt-2">
               <MomsLikeYouCarousel uid={uid} onSayHi={handleSayHi} onSave={handleSave} />
             </View>
           </View>
-        )}
+        )} */}
 
         {/* Tab Switcher */}
         <View className="mt-4">

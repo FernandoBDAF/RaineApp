@@ -1,5 +1,6 @@
 import React from "react";
 import { Image, Text, View } from "react-native";
+import { getAvatarSource } from "../../constants/avatars";
 
 interface MemberAvatarRowProps {
   avatars: string[];
@@ -33,7 +34,7 @@ export const MemberAvatarRow: React.FC<MemberAvatarRowProps> = ({
             className="border-2 border-white overflow-hidden"
           >
             <Image
-              source={{ uri }}
+              source={getAvatarSource(uri)}
               style={{ width: size - 4, height: size - 4, borderRadius: (size - 4) / 2 }}
             />
           </View>

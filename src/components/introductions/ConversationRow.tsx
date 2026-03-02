@@ -1,5 +1,6 @@
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
+import { getAvatarSource } from "../../constants/avatars";
 
 interface ConversationRowProps {
   name: string;
@@ -41,7 +42,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
     >
       {/* Avatar */}
       <Image
-        source={{ uri: avatar }}
+        source={getAvatarSource(avatar)}
         className="h-12 w-12 rounded-full"
         resizeMode="cover"
       />

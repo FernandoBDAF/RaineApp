@@ -1,5 +1,6 @@
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
+import { getAvatarSource } from "../../constants/avatars";
 import type { SavedConnection } from "../../types/introduction";
 
 interface SavedConnectionCardProps {
@@ -17,7 +18,7 @@ export const SavedConnectionCard: React.FC<SavedConnectionCardProps> = ({
     <View className="mx-6 mb-4 flex-row rounded-xl border border-slate-100 bg-white p-4">
       {/* Square avatar */}
       <Image
-        source={{ uri: connection.photoURL }}
+        source={getAvatarSource(connection.photoURL)}
         className="h-20 w-20 rounded-xl"
         resizeMode="cover"
       />

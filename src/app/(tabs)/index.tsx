@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Image, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { ActivityDashboard } from '../../components/home/ActivityDashboard';
 import { HomeHeader } from '../../components/home/HomeHeader';
-import MomsLikeYouPlaceholder from '../../components/home/MomsLikeYouPlaceholder';
+import { MomsLikeYouCarousel } from '../../components/introductions/MomsLikeYouCarousel';
 import { SectionHeader } from '../../components/shared/SectionHeader';
 import { useAuth } from '../../context/auth/AuthContext';
 import { useFeatureFlag } from '../../hooks/useFeatureFlag';
@@ -104,6 +104,15 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [loadData, uid, fetchRandomUsers]);
 
+  const handleSave = useCallback(() => {}, []);
+
+  const handleSayHi = useCallback(
+    (userId: string) => {
+      router.push(`/introduction/${userId}` as never);
+    },
+    [router]
+  );
+
   return (
     <View className="flex-1 bg-white">
       <HomeHeader
@@ -119,8 +128,14 @@ export default function HomeScreen() {
       >
         <ActivityDashboard />
 
-        <SectionHeader title="MOMS LIKE YOU" />
-        {isMomsLikeYouEnabled && <MomsLikeYouPlaceholder uid={uid ?? ''} />}
+        {isMomsLikeYouEnabled && (
+          <View className="mt-4">
+            <SectionHeader title="MOMS LIKE YOU" />
+            <View className="mt-2">
+              <MomsLikeYouCarousel uid={uid} onSayHi={handleSayHi} onSave={handleSave} />
+            </View>
+          </View>
+        )}
 
         <SectionHeader title="COMMUNITIES" />
         <CommunityPreviewPlaceholder />
