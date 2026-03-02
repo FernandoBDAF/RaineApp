@@ -23,6 +23,12 @@ export async function getUserProfile(uid: string) {
   return parseUserProfile(data);
 }
 
+export async function getUserProfiles(uids: string[]) {
+  if (uids.length === 0) return [];
+  const docs = await getUsersCollection().where('uid', 'in', uids).get();
+  return docs.docs.map((doc) => doc.data() as UserProfile);
+}
+
 /**
  * Waits for the Auth trigger (onUserCreate) to create the user profile in Firestore.
  * The profile is created server-side, so we poll until it appears.

@@ -1,5 +1,6 @@
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
+import { getAvatarSource } from "../../constants/avatars";
 
 interface HomeHeaderProps {
   onProfilePress: () => void;
@@ -16,16 +17,10 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
         Raine
       </Text>
       <Pressable onPress={onProfilePress} className="active:opacity-70">
-        {userPhotoURL ? (
-          <Image
-            source={{ uri: userPhotoURL }}
-            className="h-9 w-9 rounded-full bg-slate-200"
-          />
-        ) : (
-          <View className="h-9 w-9 items-center justify-center rounded-full bg-slate-200">
-            <Text className="text-sm text-slate-500">👤</Text>
-          </View>
-        )}
+        <Image
+          source={getAvatarSource(userPhotoURL)}
+          className="h-9 w-9 rounded-full bg-slate-200"
+        />
       </Pressable>
     </View>
   );

@@ -29,13 +29,11 @@ function shuffle<T>(array: T[]): T[] {
 
 interface GetRandomUsersProps {
   loggedUserId: string;
-  excludeUid?: string;
   limitRandom?: number;
 }
 
 export async function getRandomUsers({
   loggedUserId,
-  excludeUid,
   limitRandom = 3
 }: GetRandomUsersProps): Promise<MomsLikeYouPreview[]> {
   const snapshot = await getDb()
@@ -48,7 +46,7 @@ export async function getRandomUsers({
 
   snapshot.docs.forEach((doc) => {
     const uid = doc.id;
-    if (excludeUid && uid === excludeUid) return;
+    if (uid === loggedUserId) return;
 
     const data = doc.data();
     const firstName = typeof data?.firstName === 'string' ? data.firstName : '';

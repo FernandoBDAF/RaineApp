@@ -1,5 +1,6 @@
 import React from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
+import { getAvatarSource } from '../../constants/avatars';
 import { MomsLikeYouPreview } from '../../services/home/home-functions';
 
 interface MatchProfileCardProps {
@@ -14,7 +15,7 @@ export const MatchProfileCard: React.FC<MatchProfileCardProps> = ({ profile, onS
       {/* Photo with name overlay */}
       <View className="relative">
         <Image
-          source={{ uri: profile.photoURL }}
+          source={getAvatarSource(profile.photoURL)}
           className="h-[200px] w-full rounded-lg"
           resizeMode="cover"
         />

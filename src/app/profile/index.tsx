@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
+import { getAvatarSource } from '../../constants/avatars';
 import { ProfileTagList } from '../../components/profile/ProfileTagList';
 import { useAuth } from '../../context/auth/AuthContext';
 import { useProfileSetupStore } from '../../store/profileSetupStore';
@@ -59,7 +60,6 @@ export default function ProfileScreen() {
   );
 
   const displayName = `${firstName} ${lastInitial}.`;
-  const displayPhoto = photoURL ?? '';
 
   const handleSignOut = async () => {
     await logout();
@@ -81,13 +81,10 @@ export default function ProfileScreen() {
       <ScrollView className="flex-1 bg-white">
         {/* Profile Photo */}
         <View className="items-center py-6">
-          {displayPhoto ? (
-            <Image source={{ uri: displayPhoto }} className="h-36 w-36 rounded-full bg-slate-100" />
-          ) : (
-            <View className="h-36 w-36 items-center justify-center rounded-full bg-slate-100">
-              <Text className="text-5xl">👤</Text>
-            </View>
-          )}
+          <Image
+            source={getAvatarSource(photoURL ?? undefined)}
+            className="h-36 w-36 rounded-full bg-slate-100"
+          />
         </View>
 
         {/* Name */}

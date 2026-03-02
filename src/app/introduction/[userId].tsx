@@ -1,16 +1,43 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { getAvatarSource } from '../../constants/avatars';
+import { generateConnection } from '../../services/connections/connections-functions';
 import { getUserProfile } from '../../services/firebase/users';
+import { useProfileSetupStore } from '../../store/profileSetupStore';
+
+const LOADER_COLOR = '#f97316';
 
 export default function ProfileDetailScreen() {
+  const uid = useProfileSetupStore((state) => state.uid);
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const router = useRouter();
+  const [photoLoaded, setPhotoLoaded] = useState(false);
 
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading } = useQuery({
     queryKey: ['user-profile', userId],
     queryFn: () => getUserProfile(userId)
   });
+
+  // Reset ao trocar de usuário; se não houver photoURL, considerar carregada
+  useEffect(() => {
+    setPhotoLoaded(false);
+  }, [userId]);
+
+  useEffect(() => {
+    if (profile && !profile.photoURL) {
+      setPhotoLoaded(true);
+    }
+  }, [profile]);
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator size="large" color={LOADER_COLOR} />
+      </View>
+    );
+  }
 
   if (!profile) {
     return (
@@ -19,6 +46,11 @@ export default function ProfileDetailScreen() {
       </View>
     );
   }
+
+  const handleStartConversation = async () => {
+    await generateConnection(uid, profile);
+    router.back();
+  };
 
   return (
     <ScrollView className="flex-1 bg-white" contentContainerStyle={{ paddingBottom: 48 }}>
@@ -32,11 +64,19 @@ export default function ProfileDetailScreen() {
 
       {/* Photo */}
       <View className="items-center pt-20 px-6">
-        <Image
-          source={{ uri: profile.photoURL }}
-          className="h-[250px] w-[250px] rounded-2xl"
-          resizeMode="cover"
-        />
+        <View className="relative h-[250px] w-[250px] items-center justify-center rounded-2xl bg-slate-100">
+          <Image
+            source={getAvatarSource(profile?.photoURL)}
+            className="h-[250px] w-[250px] rounded-2xl"
+            resizeMode="cover"
+            onLoad={() => setPhotoLoaded(true)}
+          />
+          {!photoLoaded && (
+            <View className="absolute inset-0 items-center justify-center rounded-2xl bg-slate-100">
+              <ActivityIndicator size="large" color={LOADER_COLOR} />
+            </View>
+          )}
+        </View>
       </View>
 
       {/* Name */}
@@ -80,8 +120,17 @@ export default function ProfileDetailScreen() {
 
       {/* Start Conversation button */}
       <View className="mx-6 mt-8">
-        <Pressable
+        {/* <Pressable
           onPress={() => router.push(`/room/new-${profile.uid}` as never)}
+          className="flex-row items-center justify-center rounded-full border-2 border-orange-500 py-3"
+        >
+          <Text className="mr-2 text-base">💬</Text>
+          <Text className="text-sm font-bold uppercase tracking-wider text-orange-500">
+            Start Conversation
+          </Text>
+        </Pressable> */}
+        <Pressable
+          onPress={handleStartConversation}
           className="flex-row items-center justify-center rounded-full border-2 border-orange-500 py-3"
         >
           <Text className="mr-2 text-base">💬</Text>
