@@ -15,6 +15,7 @@ export interface ConnectionsWithProfiles {
   isProfilesLoading: boolean;
   isError: boolean;
   refetch: () => void;
+  connectionCount: number;
 }
 
 /**
@@ -63,6 +64,8 @@ export function useConnectionsWithProfiles(uid: string | undefined): Connections
     isLoading: connectionsQuery.isLoading,
     isProfilesLoading: profilesQuery.isFetching && !profilesQuery.isLoading,
     isError: connectionsQuery.isError ?? false,
+    connectionCount:
+      connection?.connectionDetailsList.filter((d) => d.connectionAcceptedAt).length ?? 0,
     refetch: () => {
       connectionsQuery.refetch();
     }

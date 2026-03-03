@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { getAvatarSource } from '../../constants/avatars';
 import { ProfileTagList } from '../../components/profile/ProfileTagList';
 import { useAuth } from '../../context/auth/AuthContext';
+import { useConnectionsWithProfiles } from '../../hooks/useConnectionsWithProfiles';
 import { useProfileSetupStore } from '../../store/profileSetupStore';
 
 function getChildAge(birthMonth: number, birthYear: number): string {
@@ -25,7 +26,8 @@ function getChildAge(birthMonth: number, birthYear: number): string {
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const { connectionCount } = useConnectionsWithProfiles(user?.uid);
 
   const {
     firstName,
@@ -96,6 +98,11 @@ export default function ProfileScreen() {
             {city}, {state}
           </Text>
         ) : null}
+
+        {/* Connections count */}
+        <Text className="mt-2 text-center text-sm text-slate-500">
+          {connectionCount} {connectionCount === 1 ? 'connection' : 'connections'}
+        </Text>
 
         {/* Bio */}
         {generatedBio ? (

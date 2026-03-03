@@ -1,3 +1,4 @@
+import firestore from '@react-native-firebase/firestore';
 import { getDb } from './firestore';
 import { isFirebaseMockMode } from '../../config/environment';
 import type { Room } from '../../types';
@@ -30,7 +31,9 @@ export async function getRoom(roomId: string) {
   if (!doc.exists) {
     return null;
   }
-  return { ...(doc.data() as Omit<Room, 'id'>), id: doc.id } as Room;
+  const data = doc.data() as Omit<Room, 'id'> | undefined;
+  const docId = (doc as { id?: string }).id ?? roomId;
+  return { ...data, id: docId } as Room;
 }
 
 export async function createRoom(room: Omit<Room, 'id'>) {
@@ -41,4 +44,27 @@ export async function createRoom(room: Omit<Room, 'id'>) {
 
   const docRef = await getRoomsCollection().add(room);
   return docRef.id;
+}
+
+/**
+ * Gets or creates a 1:1 room for two connected users. Returns the room id.
+ */
+export async function getOrCreateRoomForConnection(uid1: string, uid2: string): Promise<string> {
+  const [a, b] = [uid1, uid2].sort((x, y) => x.localeCompare(y));
+  const roomId = `conn_${a}_${b}`;
+
+  if (isFirebaseMockMode()) {
+    return roomId;
+  }
+
+  const existing = await getRoom(roomId);
+  if (existing) return roomId;
+
+  const roomData: Omit<Room, 'id'> = {
+    name: 'Chat',
+    memberIds: [a, b],
+    createdAt: firestore.FieldValue.serverTimestamp() as Room['createdAt']
+  };
+  await getRoomsCollection().doc(roomId).set({ ...roomData, id: roomId });
+  return roomId;
 }

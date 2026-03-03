@@ -113,6 +113,13 @@ export default function HomeScreen() {
     [router]
   );
 
+  const handleNavigateToRoom = useCallback(
+    (roomId: string) => {
+      router.push(`/room/${roomId}` as never);
+    },
+    [router]
+  );
+
   return (
     <View className="flex-1 bg-white">
       <HomeHeader
@@ -132,7 +139,12 @@ export default function HomeScreen() {
           <View className="mt-4">
             <SectionHeader title="MOMS LIKE YOU" />
             <View className="mt-2">
-              <MomsLikeYouCarousel uid={uid} onSayHi={handleSayHi} onSave={handleSave} />
+              <MomsLikeYouCarousel
+                uid={uid}
+                onSayHi={handleSayHi}
+                onSave={handleSave}
+                onNavigateToRoom={handleNavigateToRoom}
+              />
             </View>
           </View>
         )}

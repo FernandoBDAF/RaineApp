@@ -49,6 +49,9 @@ export async function getRandomUsers({
     if (uid === loggedUserId) return;
 
     const data = doc.data();
+    const profileSetupCompletedAt = data?.profileSetupCompletedAt;
+    if (!profileSetupCompletedAt) return;
+
     const firstName = typeof data?.firstName === 'string' ? data.firstName : '';
     const lastInitial = typeof data?.lastInitial === 'string' ? data.lastInitial : '';
     const photoURL = typeof data?.photoURL === 'string' ? data.photoURL : undefined;

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
@@ -13,6 +13,7 @@ export default function ProfileDetailScreen() {
   const uid = useProfileSetupStore((state) => state.uid);
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [photoLoaded, setPhotoLoaded] = useState(false);
 
   const { data: profile, isLoading } = useQuery({
@@ -49,6 +50,9 @@ export default function ProfileDetailScreen() {
 
   const handleStartConversation = async () => {
     await generateConnection(uid, profile);
+    queryClient.invalidateQueries({ queryKey: ['connections', uid] });
+    queryClient.invalidateQueries({ queryKey: ['connections', profile.uid] });
+    queryClient.invalidateQueries({ queryKey: ['connection-profiles', uid] });
     router.back();
   };
 

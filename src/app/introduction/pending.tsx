@@ -5,9 +5,13 @@ import { Timestamp } from '@react-native-firebase/firestore';
 import { getAvatarSource } from '../../constants/avatars';
 import { useAuth } from '../../context/auth/AuthContext';
 import { useConnectionsWithProfiles } from '../../hooks/useConnectionsWithProfiles';
-import { updateConnectionById } from '../../services/firebase/connections';
+import {
+  getConnectionsByConnectionUserUid,
+  updateConnectionById
+} from '../../services/firebase/connections';
 import type { ConncetionDetails } from '../../types/connection';
 import type { UserProfile } from '../../types/user';
+import { Ionicons } from '@expo/vector-icons';
 
 export interface PendingItem {
   detail: ConncetionDetails;
@@ -42,26 +46,36 @@ export default function PendingIntroductionsScreen() {
 
   const handleAccept = useCallback(
     async (item: PendingItem) => {
-      if (!connection || !connectionDocId) return;
+      if (!connection || !connectionDocId || !uid) return;
       const targetUid = item.detail.userConnectedUid;
       setAcceptingUid(targetUid);
       try {
+        const acceptedAt = Timestamp.now();
         const updatedList: ConncetionDetails[] = (connection.connectionDetailsList ?? []).map(
-          (d) =>
-            d.userConnectedUid === targetUid
-              ? { ...d, connectionAcceptedAt: Timestamp.now() }
-              : d
+          (d) => (d.userConnectedUid === targetUid ? { ...d, connectionAcceptedAt: acceptedAt } : d)
         );
         await updateConnectionById(connectionDocId, {
           ...connection,
           connectionDetailsList: updatedList
         });
-        await refetch();
+        const theirData = await getConnectionsByConnectionUserUid(targetUid);
+        if (theirData) {
+          const theirUpdatedList: ConncetionDetails[] = (
+            theirData.connection.connectionDetailsList ?? []
+          ).map((d) =>
+            d.userConnectedUid === uid ? { ...d, connectionAcceptedAt: acceptedAt } : d
+          );
+          await updateConnectionById(theirData.id, {
+            ...theirData.connection,
+            connectionDetailsList: theirUpdatedList
+          });
+        }
+        refetch();
       } finally {
         setAcceptingUid(null);
       }
     },
-    [connection, connectionDocId, refetch]
+    [connection, connectionDocId, uid, refetch]
   );
 
   const handleDecline = useCallback(
@@ -72,15 +86,13 @@ export default function PendingIntroductionsScreen() {
       try {
         const updatedList: ConncetionDetails[] = (connection.connectionDetailsList ?? []).map(
           (d) =>
-            d.userConnectedUid === targetUid
-              ? { ...d, connectionRejectedAt: Timestamp.now() }
-              : d
+            d.userConnectedUid === targetUid ? { ...d, connectionRejectedAt: Timestamp.now() } : d
         );
         await updateConnectionById(connectionDocId, {
           ...connection,
           connectionDetailsList: updatedList
         });
-        await refetch();
+        refetch();
       } finally {
         setDecliningUid(null);
       }
@@ -124,7 +136,10 @@ export default function PendingIntroductionsScreen() {
                 {isAccepting ? (
                   <ActivityIndicator size="small" color="white" />
                 ) : (
-                  <Text className="text-[10px] font-bold tracking-wider text-white">ACEITAR</Text>
+                  <View className="flex-1 flex-row items-center gap-1">
+                    <Ionicons name="checkmark-circle" size={14} color="white" />
+                    <Text className="text-[10px] font-bold tracking-wider text-white">ACCEPT</Text>
+                  </View>
                 )}
               </Pressable>
               <Pressable
@@ -135,9 +150,12 @@ export default function PendingIntroductionsScreen() {
                 {isDeclining ? (
                   <ActivityIndicator size="small" color="#94a3b8" />
                 ) : (
-                  <Text className="text-[10px] font-bold tracking-wider text-slate-400">
-                    RECUSAR
-                  </Text>
+                  <View className="flex-1 flex-row items-center gap-1">
+                    <Ionicons name="close-circle" size={14} color="#94a3b8" />
+                    <Text className="text-[10px] font-bold tracking-wider text-slate-400">
+                      DECLINE
+                    </Text>
+                  </View>
                 )}
               </Pressable>
             </View>

@@ -12,10 +12,11 @@ export interface ConncetionDetails {
   whoConnected: WhoConnected;
   connectionAcceptedAt: FirebaseFirestoreTypes.Timestamp | null;
   connectionRejectedAt: FirebaseFirestoreTypes.Timestamp | null;
+  createdAt?: Date;
 }
 
 export interface Connection {
-  connectionUserUid: string;
+  userId: string;
   connectionDetailsList: ConncetionDetails[];
   createdAt: FirebaseFirestoreTypes.Timestamp;
 }
