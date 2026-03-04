@@ -1,6 +1,6 @@
 # Raine - Decision Log
 
-**Last Updated:** February 2026
+**Last Updated:** March 2026
 **Purpose:** Document why key technical and business choices were made so future contributors understand the reasoning behind the current architecture.
 
 ---
@@ -14,13 +14,17 @@
 5. [NativeWind for Styling](#decision-nativewind-for-styling)
 6. [Firebase as Backend Platform](#decision-firebase-as-backend-platform)
 7. [Mock Mode Always On in Development](#decision-mock-mode-always-on-in-development)
-8. [Lazy Loading for Native Modules](#decision-lazy-loading-for-native-modules)
-9. [Invite-Only with Referral Codes](#decision-invite-only-with-referral-codes)
-10. [Bay Area Counties Only](#decision-bay-area-counties-only)
-11. [14-Step Profile Setup](#decision-14-step-profile-setup)
-12. [Tests Deferred](#decision-tests-deferred)
-13. [EAS Cloud Builds](#decision-eas-cloud-builds)
-14. [New Architecture Enabled](#decision-new-architecture-enabled)
+8. [Mock Mode Removed](#decision-mock-mode-removed)
+9. [Lazy Loading for Native Modules](#decision-lazy-loading-for-native-modules)
+10. [Invite-Only with Referral Codes](#decision-invite-only-with-referral-codes)
+11. [Bay Area Counties Only](#decision-bay-area-counties-only)
+12. [14-Step Profile Setup](#decision-14-step-profile-setup)
+13. [Tests Deferred](#decision-tests-deferred)
+14. [EAS Cloud Builds](#decision-eas-cloud-builds)
+15. [New Architecture Enabled](#decision-new-architecture-enabled)
+16. [Email/Password Auth Replaces Social Login](#decision-emailpassword-auth-replaces-social-login)
+17. [Connections Collection Added](#decision-connections-collection-added)
+18. [Zod for UserProfile Validation](#decision-zod-for-userprofile-validation)
 
 ---
 
@@ -122,15 +126,25 @@
 
 ---
 
+### Decision: Mock Mode Removed
+
+- **Date:** March 2026
+- **Context:** The mock mode system (`isFirebaseMockMode()` returning `true` in `__DEV__`) was introduced to avoid Facebook SDK crashes and Firestore permission errors during development. Since then, social login was replaced with email/password auth (eliminating the Facebook SDK dependency entirely), and the Firebase backend is now fully configured with working security rules for development users.
+- **Decision:** Remove mock mode entirely. All Firebase services (Auth, Firestore, Storage) run against the real backend in every environment, including development.
+- **Rationale:** Maintaining dual code paths (mock vs. real) created a class of bugs where UI behavior in development diverged from production. Mock data shapes drifted from actual Firestore documents, causing runtime surprises on preview/production builds. With the Facebook SDK removed and Firestore security rules properly configured, the original motivations for mock mode no longer apply. Removing it simplifies the codebase and ensures development testing exercises the same code paths as production.
+- **Consequences:** Developers must have network access and valid Firebase configuration to run the app locally. The `src/config/environment.ts` mock mode logic and all mock data providers have been deleted. Any new feature development is tested against real Firestore from the start.
+
+---
+
 ### Decision: Lazy Loading for Native Modules
 
 - **Date:** February 2026
-- **Context:** The app crashed at startup with `TypeError: Cannot read property 'EventEmitter' of undefined`. The root cause was that Expo Router eagerly loads all route modules to build the navigation tree. When a route file had a top-level `import` of a native module (`react-native-purchases`, `react-native-fbsdk-next`, or any `@react-native-firebase/*` package), the module's `NativeEventEmitter` initialized before the React Native runtime bridge was ready.
+- **Context:** The app crashed at startup with `TypeError: Cannot read property 'EventEmitter' of undefined`. The root cause was that Expo Router eagerly loads all route modules to build the navigation tree. When a route file had a top-level `import` of a native module (`react-native-purchases` or any `@react-native-firebase/*` package), the module's `NativeEventEmitter` initialized before the React Native runtime bridge was ready.
 - **Options Considered:**
   1. **Move native modules to non-route files only** -- Would work, but limits where native functionality can be used and is hard to enforce as the codebase grows.
   2. **Lazy-load native modules via `require()` inside function bodies** -- Defers module initialization until the function is actually called, by which time the bridge is ready.
   3. **Use dynamic `import()` expressions** -- Similar to `require()` but asynchronous. Adds complexity with promises for every native call.
-- **Decision:** Native modules (`react-native-purchases`, `react-native-fbsdk-next`, `@react-native-firebase/*`) must never appear in top-level `import` statements in route files. Use `require()` inside function bodies or restrict value imports to non-route service files.
+- **Decision:** Native modules (`react-native-purchases`, `@react-native-firebase/*`) must never appear in top-level `import` statements in route files. Use `require()` inside function bodies or restrict value imports to non-route service files. Note: `react-native-fbsdk-next` was removed entirely when social login was replaced with email/password auth. The `firebase.ts` service file was subsequently rewritten with direct imports (safe because it is not a route file).
 - **Rationale:** The `require()` pattern is the simplest fix that addresses the root cause. It defers native module initialization to the point of use, when the bridge is guaranteed to be ready. Type-only imports (`import type`) are permitted in non-route service files but must be avoided even in route files because Metro may still resolve the module. This invariant is documented in the system architecture invariants (see `implementation-history/8-dev-build-runtime-fixes.md`).
 - **Consequences:** Developers must remember the lazy-loading rule, which is non-obvious and easy to violate. A single top-level import of a native module in a route file will crash the app at startup. The invariant is documented but not enforced by a lint rule (a custom ESLint rule is a future improvement).
 
@@ -195,7 +209,7 @@
 ### Decision: EAS Cloud Builds
 
 - **Date:** January 2026
-- **Context:** The project uses custom native modules (`@react-native-firebase`, `react-native-mmkv`, `react-native-purchases`, `react-native-fbsdk-next`) that require native compilation. Local builds require a properly configured Xcode (macOS only) and Android SDK environment, which is fragile and time-consuming to maintain.
+- **Context:** The project uses custom native modules (`@react-native-firebase`, `react-native-mmkv`, `react-native-purchases`) that require native compilation. Local builds require a properly configured Xcode (macOS only) and Android SDK environment, which is fragile and time-consuming to maintain.
 - **Options Considered:**
   1. **Local builds (`expo run:ios`, `expo run:android`)** -- Full control, no cloud dependency, but requires local Xcode/Android SDK setup, manual code signing, and breaks frequently with native dependency updates.
   2. **EAS Build (Expo Application Services)** -- Cloud-based build service that handles native compilation, code signing, and artifact distribution. Supports development, preview, and production build profiles.
@@ -213,9 +227,39 @@
 - **Options Considered:**
   1. **Legacy architecture (bridge-based)** -- Maximum library compatibility, well-understood performance characteristics. Will eventually be deprecated.
   2. **New Architecture enabled** -- JSI-based synchronous native calls, Fabric renderer with concurrent features, TurboModules for lazy-loaded native modules. The future of React Native.
-- **Decision:** Enable New Architecture from Day 1 (`"newArchEnabled": true` in `app.json`).
+- **Decision:** Enable New Architecture from Day 1 (`"newArchEnabled": true` in `app.config.js`).
 - **Rationale:** Starting on the New Architecture avoids a painful migration later. Key dependencies already support it: `react-native-mmkv` v4 uses Nitro Modules (JSI-based), `react-native-reanimated` v4 is New Architecture native, and `@react-native-firebase` v23 supports both architectures. The JSI bridge provides synchronous native calls, which improves performance for MMKV reads and Reanimated animations. Fabric's concurrent rendering aligns with React 19's concurrent features. Since this is a new project with no legacy bridge dependencies, there is no migration cost.
 - **Consequences:** Some older third-party libraries may not support the New Architecture (requires checking before adding new dependencies). Debugging tools and documentation are still catching up. The Nitro Modules ecosystem is newer and less battle-tested than the bridge-based module ecosystem. These risks are acceptable given that the project's core dependencies are already compatible.
+
+---
+
+### Decision: Email/Password Auth Replaces Social Login
+
+- **Date:** March 2026
+- **Context:** The original auth flow used three social providers (Instagram, Facebook, LinkedIn) via `react-native-fbsdk-next` and custom OAuth flows. The Facebook SDK caused persistent crashes in development builds due to missing App ID configuration, and each provider required its own developer app setup, token exchange logic, and maintenance. Social login was also the primary driver behind mock mode (see "Mock Mode Always On in Development" above).
+- **Decision:** Replace all social login providers with email/password authentication via Firebase Auth (`createUserWithEmailAndPassword` / `signInWithEmailAndPassword`).
+- **Rationale:** Email/password auth eliminates the Facebook SDK dependency entirely, removes the need for provider-specific developer app configurations, and simplifies the auth flow to a single code path. Operational complexity drops significantly — no OAuth token exchanges, no app review processes, no SDK version conflicts. The login screen now presents a straightforward email/password form with a signup link.
+- **Trade-off:** Losing social provider integration means no automatic social graph data (e.g., mutual Facebook friends). The invite-based referral system and the new connections collection provide an alternative social graph rooted in real-world relationships rather than platform data.
+
+---
+
+### Decision: Connections Collection Added
+
+- **Date:** March 2026
+- **Context:** With social login removed, the app lost its implicit social graph. The introductions feature and friend-of-friend matching require knowing which users are connected. A dedicated data model for user-to-user connections was needed.
+- **Decision:** Add a `connections` collection in Firestore with a document-per-user model. Each document contains a map of connected user IDs. When a connection is established, both users' documents are updated using `Promise.all` with individual writes (not a Firestore transaction).
+- **Rationale:** The document-per-user model allows efficient lookups for a given user's connections without querying across subcollections. `Promise.all` with individual writes was chosen over Firestore transactions because the two writes target different documents, and transactions add latency and complexity for a case where eventual consistency is acceptable.
+- **Trade-off:** `Promise.all` without a transaction means a partial write is possible if one write succeeds and the other fails (e.g., user A's document updates but user B's does not). This is an accepted risk — the connection can be repaired on the next interaction, and the failure case is rare under normal conditions.
+
+---
+
+### Decision: Zod for UserProfile Validation
+
+- **Date:** March 2026
+- **Context:** Firestore documents can be partial, malformed, or contain unexpected field types — especially during the transition away from mock data and as the schema evolves. TypeScript interfaces alone cannot catch runtime data issues from the backend.
+- **Decision:** Use Zod schemas with `safeParse` at the Firestore read boundary to validate `UserProfile` data before it enters the application layer.
+- **Rationale:** Zod provides runtime type validation that complements TypeScript's compile-time checks. Using `safeParse` (rather than `parse`) means malformed documents produce a structured error result instead of throwing, allowing the app to handle missing or invalid fields gracefully (e.g., falling back to defaults or showing an error state). The schema serves as a single source of truth for the `UserProfile` shape, keeping TypeScript types and runtime validation in sync.
+- **Trade-off:** Adds a small runtime overhead on every Firestore document read. The Zod library also adds to the bundle size (~13KB gzipped). Both are acceptable given the reliability benefit of catching malformed data at the boundary rather than propagating it through the component tree.
 
 ---
 
@@ -225,11 +269,11 @@
 |----------|--------------|
 | [Product Overview](./1-PRODUCT-OVERVIEW.md) | Product vision, four pillars, target audience, and tech stack overview |
 | [User Flows](./2-USER-FLOWS.md) | End-to-end user journey maps referenced by invite-only and profile setup decisions |
-| [Onboarding Spec](./3-FEATURE-SPECS/3.1-ONBOARDING.md) | Referral code gate and social login implementation details |
+| [Onboarding Spec](./3-FEATURE-SPECS/3.1-ONBOARDING.md) | Referral code gate and email/password login implementation details |
 | [Profile Setup Spec](./3-FEATURE-SPECS/3.2-PROFILE-SETUP.md) | 14-step flow specification, geographic restriction, and state management |
-| [Master Implementation Plan](../../implementation-history/7-MASTER-IMPLEMENTATION-PLAN.md) | Architecture strategy, phased roadmap, and mock-first development philosophy |
-| [Dev Build & Runtime Fixes](../../implementation-history/8-dev-build-runtime-fixes.md) | System invariants for mock mode, lazy loading, and Expo Router entry point |
+| [Master Implementation Plan](../../implementation-history/7-MASTER-IMPLEMENTATION-PLAN.md) | Architecture strategy, phased roadmap, and development philosophy |
+| [Dev Build & Runtime Fixes](../../implementation-history/8-dev-build-runtime-fixes.md) | System invariants for lazy loading and Expo Router entry point |
 | [package.json](../../package.json) | Dependency versions for all libraries referenced in this log |
-| [app.json](../../app.json) | Expo configuration including New Architecture flag and plugin setup |
+| [app.config.js](../../app.config.js) | Expo configuration including New Architecture flag and plugin setup |
 | [eas.json](../../eas.json) | EAS Build profiles (development, preview, production) |
-| [environment.ts](../../src/config/environment.ts) | Mock mode implementation and feature flag defaults |
+| [environment.ts](../../src/config/environment.ts) | Feature flag defaults |

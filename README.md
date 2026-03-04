@@ -1,6 +1,6 @@
 # Raine App
 
-A React Native mobile application built with Expo, featuring social authentication, real-time messaging, and subscription management.
+A React Native mobile application built with Expo, featuring email/password authentication, real-time messaging, and subscription management.
 
 ## Tech Stack
 
@@ -22,7 +22,7 @@ A React Native mobile application built with Expo, featuring social authenticati
 
 ### Expo Go vs. Development Builds
 
-This project **cannot run in Expo Go**. It uses native modules (Firebase, MMKV, RevenueCat, Facebook SDK) that require compiled native code. Instead, it uses **EAS Development Builds** — custom native binaries that include all native modules and connect to Metro for JS hot-reload.
+This project **cannot run in Expo Go**. It uses native modules (Firebase, MMKV, RevenueCat) that require compiled native code. Instead, it uses **EAS Development Builds** — custom native binaries that include all native modules and connect to Metro for JS hot-reload.
 
 | Concept | What it means |
 |---------|--------------|
@@ -35,7 +35,7 @@ This project **cannot run in Expo Go**. It uses native modules (Firebase, MMKV, 
 
 | File | Purpose |
 |------|---------|
-| `app.json` | Expo project config: app name, slug, plugins, native settings (bundle ID, package name, Firebase config paths) |
+| `app.config.js` | Expo project config: app name, slug, plugins, native settings (bundle ID, package name, Firebase config paths) |
 | `eas.json` | EAS Build profiles: development, preview, production — each with platform-specific settings |
 | `package.json` | Dependencies and scripts. `"main": "expo-router/entry"` is the app entry point (must not be changed) |
 | `babel.config.js` | Babel presets (`babel-preset-expo`, `nativewind/babel`) and plugins (`react-native-reanimated/plugin`) |
@@ -71,12 +71,11 @@ src/app/
 
 | Profile | Use Case | Output | Distribution |
 |---------|----------|--------|-------------|
-| `development` | Daily development | APK (Android) / IPA (iOS device) | Internal |
-| `development-simulator` | iOS Simulator | Simulator build | Internal |
-| `preview` | QA / stakeholder testing | APK / IPA | Internal |
+| `dev` | Daily development (simulator) | APK (Android) / Simulator build (iOS) | Internal (simulator) |
+| `preview` | QA / stakeholder testing | APK / IPA | Store (internal testing tracks) |
 | `production` | App Store / Play Store | AAB (Android) / IPA (iOS) | Store |
 
-### Native Plugins (`app.json` → `plugins`)
+### Native Plugins (`app.config.js` → `plugins`)
 
 These Expo config plugins modify the native project during `expo prebuild`:
 
@@ -87,7 +86,7 @@ These Expo config plugins modify the native project during `expo prebuild`:
 | `@react-native-firebase/app` | Firebase native initialization |
 | `@react-native-firebase/crashlytics` | Crash reporting |
 
-> **Note:** `react-native-fbsdk-next` is in dependencies but NOT in `plugins`. The Facebook App ID is not configured. In development, social login uses mock auth. To enable real Facebook login in production, add the plugin with your App ID.
+> **Note:** Social login has been replaced with email/password authentication via Firebase Auth. The Facebook SDK is no longer used.
 
 ---
 
@@ -129,7 +128,7 @@ yarn install:ios
 # 5. Start the dev server
 yarn dev
 
-# The app connects to Metro automatically. Full UI flow works with mock data.
+# The app connects to Metro automatically. Full UI flow works with real Firebase.
 ```
 
 ### Scenario 2: Daily Development (Build Already Exists)
@@ -274,29 +273,26 @@ yarn type-check && yarn lint
 
 ## Development Modes
 
-### Mock Mode (Default in Development)
+### Development Mode
 
-In development (`__DEV__ === true`), **all Firebase services are automatically mocked**:
+In development (`__DEV__ === true`), **real Firebase services are used** — the same Firebase project backs both dev and production. There is no mock mode; all auth, Firestore reads/writes, and connections hit the real backend.
 
-| Service | Mock Behavior |
-|---------|--------------|
-| Authentication | Mock user (`mock-user-123`) via `loginAsMockUser()` |
-| Firestore | Returns empty collections, skips writes |
-| Storage | Returns the original URI (no upload) |
-| Messaging | Returns mock token, no-op listeners |
+| Service | Behavior |
+|---------|----------|
+| Authentication | Real Firebase Auth (email/password) |
+| Firestore | Real reads and writes |
+| Storage | Real uploads |
+| Messaging | Returns mock token, no-op listeners (FCM not configured yet) |
 | Remote Config | Returns default feature flags |
 | RevenueCat | Not configured — returns mock entitlements |
 
-**Why:** The development build includes Firebase native modules, but the Facebook SDK is not configured (no App ID). Mock mode ensures the full UI flow works without real backend credentials.
-
-**The full mock flow works:** Splash → Referral code → Login → 14-step profile setup → Home → Rooms → Profile → Sign out.
+**The full flow works with real data:** Splash → Referral code → Login → 14-step profile setup → Home → Rooms → Profile → Sign out.
 
 ### Production Mode
 
-In production builds (`__DEV__ === false`), real Firebase services are used. Requirements:
+In production builds (`__DEV__ === false`), the same real Firebase services are used. Requirements:
 
 - `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) from Firebase Console
-- `react-native-fbsdk-next` plugin in `app.json` with Facebook App ID
 - `EXPO_PUBLIC_REVENUECAT_API_KEY` environment variable
 - Firestore security rules configured for your users
 
@@ -320,21 +316,19 @@ RaineApp/
 │   │   ├── profile-setup/        # Profile setup components
 │   │   └── ui/                   # Base UI (Button, Input, etc.)
 │   ├── config/
-│   │   └── environment.ts        # Dev/prod detection, mock mode flag
+│   │   └── environment.ts        # Dev/prod detection, Firebase initialization guard
 │   ├── constants/                # Static values, profile options
-│   ├── features/
+│   ├── context/
 │   │   └── auth/                 # AuthContext provider
 │   ├── hooks/                    # Custom React hooks
 │   ├── services/
-│   │   ├── firebase/             # Firebase wrappers (all with mock guards)
-│   │   │   ├── mock/             # Mock implementations
-│   │   │   ├── auth.ts           # Auth (sign in, sign out, listener)
+│   │   ├── firebase/             # Firebase wrappers (real in all environments)
+│   │   │   ├── auth.ts           # Auth (email/password sign in, sign out, listener)
 │   │   │   ├── firestore.ts      # Firestore instance (mock or real)
 │   │   │   ├── messages.ts       # Chat messages
 │   │   │   ├── notifications.ts  # Push notifications
 │   │   │   ├── remoteConfig.ts   # Feature flags
 │   │   │   ├── rooms.ts          # Chat rooms
-│   │   │   ├── socialAuth.ts     # Social login (Instagram, Facebook, LinkedIn)
 │   │   │   └── users.ts          # User profiles
 │   │   ├── bio/                  # AI bio generation
 │   │   ├── profile/              # Profile save, photo upload, waitlist
@@ -345,7 +339,7 @@ RaineApp/
 ├── assets/                       # Images, icons, splash screen
 ├── development/                  # Working docs (gitignored, local only)
 ├── documents/                    # Implementation plans
-├── app.json                      # Expo configuration
+├── app.config.js                 # Expo configuration
 ├── eas.json                      # EAS Build profiles
 ├── babel.config.js               # Babel (expo + nativewind + reanimated)
 ├── metro.config.js               # Metro bundler (NativeWind)
@@ -379,17 +373,13 @@ function getPurchases() {
 interface RCOffering { availablePackages: RCPackage[] }
 ```
 
-### 2. Every Firebase service must check `isFirebaseMockMode()`
+### 2. Every Firebase service must call `ensureFirebaseInitialized()`
 
 ```typescript
-import { isFirebaseMockMode } from '../../config/environment';
+import { ensureFirebaseInitialized } from '../../config/environment';
 
 export async function myFirebaseOperation() {
-  if (isFirebaseMockMode()) {
-    // Return mock data or skip
-    return;
-  }
-  // Real Firebase call (lazy require)
+  ensureFirebaseInitialized();
   const firestore = require('@react-native-firebase/firestore').default;
   await firestore().collection('x').doc('y').set(data);
 }
@@ -419,24 +409,7 @@ It must execute before any component renders. Do not move it into a `useEffect`.
 - Download `google-services.json` → place in project root
 - Download `GoogleService-Info.plist` → place in project root
 
-### Step 3: Facebook SDK (for Social Login)
-
-Add to `app.json` plugins:
-
-```json
-{
-  "plugins": [
-    ["react-native-fbsdk-next", {
-      "appID": "YOUR_FACEBOOK_APP_ID",
-      "clientToken": "YOUR_CLIENT_TOKEN",
-      "displayName": "Raine",
-      "scheme": "fbYOUR_FACEBOOK_APP_ID"
-    }]
-  ]
-}
-```
-
-### Step 4: Rebuild
+### Step 3: Rebuild
 
 ```bash
 yarn build:dev:android
@@ -488,8 +461,8 @@ Config files: `tailwind.config.js`, `metro.config.js`, `global.css`, `nativewind
 | Metro port conflict | `pkill -f "expo start" && yarn dev` |
 | TypeScript errors | `yarn type-check` |
 | Watchman recrawling | `watchman watch-del "$(pwd)" ; watchman watch-project "$(pwd)"` |
-| Firestore permission denied | You're in production mode with a mock user. Check `isFirebaseMockMode()` |
-| Sign-out crash | Auth service is using real Firebase instead of mock. Check `isDev` guard |
+| Firestore permission denied | Check Firestore security rules and that the user is authenticated |
+| Sign-out crash | Check auth service error handling and `ensureFirebaseInitialized()` guard |
 
 **Detailed guides:**
 - [System Invariants](./documents/TECHNICAL/9-SYSTEM-INVARIANTS.md)

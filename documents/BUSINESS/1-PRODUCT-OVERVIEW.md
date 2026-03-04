@@ -29,7 +29,7 @@ Raine is organized around four pillars, each serving a distinct purpose in a mom
 
 ### User Journey
 
-- **Day 1 (Onboarding):** Splash screen (4s) -> Referral code entry -> Social login -> 14-screen profile setup -> Home dashboard
+- **Day 1 (Onboarding):** Splash screen (4s) -> Referral code entry -> Email/password authentication (sign in or create account) -> 14-screen profile setup -> Home dashboard
 - **Days 2-30 (Discovery):** Browse "Moms Like You" -> Say Hi -> 1:1 chat; join communities; explore drops
 - **Ongoing (Growth):** Manage active conversations, participate in community threads, save product recommendations, edit profile, manage subscription
 
@@ -113,10 +113,10 @@ Subscription revenue is the primary monetization path. Raine does not currently 
 | Feature | Status | Notes |
 |---------|--------|-------|
 | **Onboarding (Splash + Referral)** | Implemented | 4-second splash, referral code gate |
-| **Social Authentication** | Implemented | Facebook, Instagram, LinkedIn via Firebase Auth; mock mode for development |
+| **Email/Password Authentication** | Implemented | Email + password via Firebase Auth |
 | **Profile Setup (14 screens)** | Implemented | Name, photo, location, city feel, children, interests, aesthetics, bio |
-| **Home Dashboard** | Not Started | Central activity hub with recommendations and activity feed |
-| **Introductions** | Not Started | 1:1 social discovery with "Say Hi" and compatibility matching |
+| **Home Dashboard** | Partial | Central activity hub with recommendations and activity feed — real Firestore data via connections system |
+| **Introductions** | Partial | 1:1 social discovery with "Say Hi" and compatibility matching — real Firestore data via connections system |
 | **Communities** | Not Started | Group discussions organized by topic |
 | **Drops** | Not Started | Curated product recommendations from trusted moms |
 | **1:1 Chat** | Implemented (UI) | Chat interface complete; real-time messaging pending backend integration |
@@ -126,7 +126,7 @@ Subscription revenue is the primary monetization path. Raine does not currently 
 | **Analytics** | Partial | Firebase Analytics scaffolded; Amplitude migration planned |
 | **Settings** | Implemented | Account management, app reset, preferences |
 | **Profile Viewing/Editing** | Implemented | View and edit profile; redesign planned |
-| **Offline / Mock Mode** | Implemented | Full UI flow works without live backend via mock data layer |
+| **Offline / Mock Mode** | Removed | Previously enabled mock data for UI development; now uses live Firebase in all environments |
 
 ---
 
@@ -140,7 +140,7 @@ Subscription revenue is the primary monetization path. Raine does not currently 
 | **Navigation** | Expo Router (file-based routing) |
 | **Styling** | NativeWind v4 (Tailwind CSS for React Native) |
 | **State Management** | Zustand + React Context API |
-| **Authentication** | Firebase Auth (social providers) |
+| **Authentication** | Firebase Auth (email/password) |
 | **Database** | Cloud Firestore (real-time listeners) |
 | **Local Cache** | MMKV v4 (Nitro Modules for fast startup) |
 | **Subscriptions** | RevenueCat (`react-native-purchases`) |

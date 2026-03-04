@@ -30,7 +30,7 @@ graph TD
 |-------|---------------|
 | **UI** | Screen rendering, navigation, user interaction. Expo Router file-based routes organized into route groups (`(onboarding)`, `(auth)`, `(profile-setup)`, `(tabs)`). |
 | **State** | Application state via Zustand stores with MMKV persistence. Server-state caching and synchronization via TanStack React Query. |
-| **Service** | Thin wrappers around external SDKs. Each service module exports a consistent API and supports mock-mode substitution in development. |
+| **Service** | Thin wrappers around external SDKs. Each service module exports a consistent API. |
 | **External** | Third-party backends and APIs consumed exclusively through the service layer. |
 
 ---
@@ -47,7 +47,7 @@ graph TD
 | State (client) | Zustand | ^5.0.11 | Lightweight stores with MMKV persistence middleware |
 | State (server) | TanStack React Query | ^5.90.20 | Async data fetching, caching, and background refetching |
 | Storage (local) | react-native-mmkv | ^4.1.2 | Synchronous key-value persistence (JSI-backed) |
-| Auth | Firebase Auth | ^23.8.6 | Email/password, social login (Facebook SDK) |
+| Auth | Firebase Auth | ^23.8.6 | Email/password authentication |
 | Database | Cloud Firestore | ^23.8.6 | NoSQL document database for user and app data |
 | File Storage | Firebase Storage | ^23.8.6 | Image and media asset storage |
 | Cloud Functions | Firebase Functions | ^23.8.6 | Server-side business logic |
@@ -56,7 +56,6 @@ graph TD
 | Push Notifications | Firebase Messaging | ^23.8.6 | FCM push notifications |
 | Remote Config | Firebase Remote Config | ^23.8.6 | Feature flags and remote configuration |
 | Subscriptions | RevenueCat | ^9.7.6 | In-app purchase and subscription management |
-| Social Auth | react-native-fbsdk-next | ^13.4.3 | Facebook Login SDK integration |
 | Animations | Reanimated | ~4.1.1 | Native-thread animations and gesture handling |
 | Icons | Lucide React Native | ^0.563.0 | SVG icon library |
 | Images | expo-image | ~3.0.11 | High-performance image rendering with caching |
@@ -78,11 +77,11 @@ Source code is organized by feature domain rather than technical role. Each feat
 
 ### Service Abstraction
 
-All external SDK access is encapsulated behind service modules in `src/services/`. No UI component or store imports a Firebase, RevenueCat, or third-party SDK directly. This enables mock-mode substitution without modifying consumers.
+All external SDK access is encapsulated behind service modules in `src/services/`. No UI component or store imports a Firebase, RevenueCat, or third-party SDK directly. This decouples consumers from specific SDK implementations.
 
-### Mock-First Development
+### Real Firebase Required
 
-When Firebase configuration files are absent or the app runs in `__DEV__` mode, the environment module (`src/config/environment.ts`) activates mock mode. Service modules detect this flag via `isFirebaseMockMode()` and return mock data, enabling the full UI flow to work without a configured backend. See [Mock Mode](./8-MOCK-MODE.md) for implementation details.
+All environments (development, preview, production) use real Firebase services. There is no mock-mode fallback. Valid Firebase configuration files (`google-services.json` for Android, `GoogleService-Info.plist` for iOS) and `EXPO_PUBLIC_FIREBASE_*` environment variables must be present before the app can start. `isFirebaseMockMode()` always returns `false`.
 
 ### Lazy Loading
 
@@ -104,7 +103,7 @@ See [Design Patterns](./3-DESIGN-PATTERNS.md) for a detailed description of the 
 
 | File | Purpose |
 |------|---------|
-| `app.json` | Expo project configuration: app name, slug, bundle identifiers, platform-specific settings, native config plugins (Expo Router root, expo-dev-client, Firebase App, Crashlytics), EAS project ID, splash screen, and icon assets. |
+| `app.config.js` | Expo project configuration as a JS module (not static JSON): app name, slug, bundle identifiers, platform-specific settings, native config plugins (Expo Router root, expo-dev-client, Firebase App, Crashlytics), EAS project ID, splash screen, and icon assets. |
 | `eas.json` | EAS Build and Submit profiles. Defines four build profiles (`development`, `development-simulator`, `preview`, `production`) with platform-specific output formats and distribution targets. |
 | `babel.config.js` | Babel transpilation: uses `babel-preset-expo` and `nativewind/babel` presets, plus the `react-native-reanimated/plugin` (must be listed last). |
 | `metro.config.js` | Metro bundler configuration: extends Expo defaults and wraps with `withNativeWind` to process `global.css` as the Tailwind CSS entry point. |
@@ -118,15 +117,15 @@ See [Design Patterns](./3-DESIGN-PATTERNS.md) for a detailed description of the 
 
 ### EAS Build Workflow
 
-Raine uses [EAS Build](https://docs.expo.dev/build/introduction/) for all native builds. The CLI version requirement is `>= 5.0.0`, and app versioning is sourced from local configuration (`app.json`).
+Raine uses [EAS Build](https://docs.expo.dev/build/introduction/) for all native builds. The CLI version requirement is `>= 5.0.0`, and app versioning is sourced from local configuration (`app.config.js`).
 
 ### Build Profiles
 
 | Profile | Distribution | Dev Client | iOS Output | Android Output | Use Case |
 |---------|-------------|------------|------------|----------------|----------|
-| `development` | Internal | Yes | Device build (no simulator) | APK | On-device development with hot reload and dev tools |
+| `development` | Internal | Yes | Simulator build | APK | Development with hot reload and dev tools (iOS targets Simulator) |
 | `development-simulator` | Internal | Yes | Simulator build | N/A | iOS Simulator development without a physical device |
-| `preview` | Internal | No | Device build (no simulator) | APK | Internal testing of production-like builds without dev tools |
+| `preview` | Store | No | Device build (no simulator) | APK | Store-distributed testing of production-like builds without dev tools |
 | `production` | Store | No | Device build (no simulator) | AAB (app-bundle) | App Store / Google Play submission (auto-increments version) |
 
 ### Build Commands
@@ -161,29 +160,17 @@ The application startup follows a deterministic sequence to ensure services are 
 sequenceDiagram
     participant Module as Module Scope
     participant RootLayout as RootLayout
-    participant RootContent as RootLayoutContent
-    participant Firebase as Firebase SDK
-    participant EnvConfig as environment.ts
     participant Providers as QueryClient + AuthProvider
+    participant RootContent as RootLayoutContent
     participant Router as Expo Router
 
     Module->>Module: SplashScreen.preventAutoHideAsync()
     Module->>RootLayout: Mount RootLayout
-    RootLayout->>Firebase: Import @react-native-firebase/app
-    Firebase-->>RootLayout: Return apps list
-
-    alt No Firebase apps configured
-        RootLayout->>EnvConfig: setFirebaseMockMode(true)
-    else Firebase initialized
-        RootLayout->>EnvConfig: setFirebaseMockMode(false)
-    end
-
-    RootLayout->>RootLayout: setFirebaseReady(true)
     RootLayout->>Providers: Render QueryClientProvider + AuthProvider
+
     Providers->>RootContent: Mount RootLayoutContent
-    RootContent->>RootContent: initRemoteConfig()
-    RootContent->>RootContent: configureRevenueCat(user?.uid)
-    RootContent->>RootContent: Register notification listeners
+
+    Note over Providers: Auth listener fires, resolves user state
 
     Note over RootContent: Wait for auth loading to complete
 
@@ -203,13 +190,10 @@ sequenceDiagram
 ### Step-by-Step Breakdown
 
 1. **Splash hold** -- `SplashScreen.preventAutoHideAsync()` runs at module scope, before any component mounts, to prevent a white flash.
-2. **Firebase check** -- `RootLayout` asynchronously imports `@react-native-firebase/app` and inspects the initialized apps list.
-3. **Mock mode decision** -- If no Firebase app is initialized (missing config files) or the import throws, `setFirebaseMockMode(true)` is called. Otherwise, mock mode is disabled.
-4. **Provider tree** -- Once the Firebase check completes (`firebaseReady === true`), the provider tree renders: `QueryClientProvider` (TanStack React Query) wrapping `AuthProvider` (Firebase Auth listener).
-5. **Service initialization** -- `RootLayoutContent` triggers side effects: Remote Config fetch, RevenueCat configuration, and notification listener registration.
-6. **Auth resolution** -- The `AuthProvider` resolves the current authentication state. While `isLoading` is true, the splash screen remains visible.
-7. **Splash hide** -- Once auth loading completes, the splash screen is hidden and `appReady` is set to true.
-8. **Navigation guard** -- The segment-based guard evaluates the user's authentication state, profile completion status, and current route segment to determine the correct redirect target.
+2. **Provider tree** -- `RootLayout` renders the provider tree immediately: `QueryClientProvider` (TanStack React Query) wrapping `AuthProvider` (Firebase Auth listener).
+3. **Auth resolution** -- The `AuthProvider`'s `onAuthStateChanged` listener fires and resolves the current authentication state. While `isLoading` is true, the splash screen remains visible.
+4. **Splash hide** -- Once auth loading completes, the splash screen is hidden and `appReady` is set to true.
+5. **Navigation guard** -- The segment-based guard evaluates the user's authentication state, profile completion status, and current route segment to determine the correct redirect target.
 
 ---
 
@@ -229,7 +213,6 @@ The following native modules require linking and are included via Expo config pl
 | `@react-native-firebase/messaging` | Native FCM push notification handling |
 | `@react-native-firebase/remote-config` | Native Remote Config fetch and activation |
 | `react-native-purchases` | RevenueCat native SDK for in-app subscriptions |
-| `react-native-fbsdk-next` | Facebook Login native SDK integration |
 | `react-native-reanimated` | Native-thread animation driver (worklet-based) |
 | `react-native-screens` | Native screen containers for navigation performance |
 | `react-native-safe-area-context` | Native safe area inset detection |
@@ -252,4 +235,4 @@ The following native modules require linking and are included via Expo config pl
 
 - [Folder Structure](./2-FOLDER-STRUCTURE.md) -- Directory layout and file naming conventions.
 - [Design Patterns](./3-DESIGN-PATTERNS.md) -- Patterns used across the codebase including navigation guards, service abstraction, and store design.
-- [Mock Mode](./8-MOCK-MODE.md) -- How mock mode works, when it activates, and how service modules implement mock fallbacks.
+- [Mock Mode](./8-MOCK-MODE.md) -- (Removed) Mock mode was eliminated; all environments use real Firebase. Retained for historical reference only.

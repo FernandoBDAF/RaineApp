@@ -17,29 +17,77 @@ This document describes the complete data model for the Raine application, cover
 
 ## 1. Firestore Collections
 
-All Firestore access is routed through `src/services/firebase/firestore.ts`, which provides a lazy-loaded `getDb()` function with a mock mode for UI testing. Collection references are created via `getDb().collection(name)`.
+All Firestore access is routed through `src/services/firebase/firestore.ts`, which provides a lazy-loaded `getDb()` function. Collection references are created via `getDb().collection(name)`.
 
 ### 1.1 `users`
 
 Stores user profile data. Documents are keyed by Firebase Auth `uid`.
 
-| Field                | Type                              | Required | Description                                      |
-|----------------------|-----------------------------------|----------|--------------------------------------------------|
-| `uid`                | `string`                          | Yes      | Firebase Auth user identifier (also the doc ID)  |
-| `email`              | `string`                          | Yes      | User email address                               |
-| `displayName`        | `string`                          | Yes      | User-facing display name                         |
-| `photoURL`           | `string`                          | No       | URL to the user's profile photo                  |
-| `subscriptionStatus` | `string`                          | Yes      | Current subscription tier or status              |
-| `createdAt`          | `Firestore Timestamp`             | Yes      | Account creation timestamp                       |
-| `lastSeen`           | `Firestore Timestamp`             | Yes      | Last time the user was active                    |
-| `fcmToken`           | `string`                          | No       | Firebase Cloud Messaging token for push notifications |
+| Field                       | Type                              | Required | Description                                      |
+|-----------------------------|-----------------------------------|----------|--------------------------------------------------|
+| `uid`                       | `string`                          | Yes      | Firebase Auth user identifier (also the doc ID)  |
+| `email`                     | `string`                          | Yes      | User email address                               |
+| `displayName`               | `string`                          | Yes      | User-facing display name                         |
+| `photoURL`                  | `string`                          | No       | URL to the user's profile photo                  |
+| `subscriptionStatus`        | `string`                          | Yes      | Current subscription tier or status              |
+| `profileSetupCompletedAt`   | `Firestore Timestamp`             | No       | Timestamp when profile setup was completed (`null` if incomplete) |
+| `referralCode`              | `string`                          | No       | Referral code used during signup                 |
+| `firstName`                 | `string`                          | No       | User's first name (from profile setup)           |
+| `lastInitial`               | `string`                          | No       | User's last name initial (from profile setup)    |
+| `zipCode`                   | `string`                          | No       | User's ZIP code                                  |
+| `city`                      | `string`                          | No       | User's city                                      |
+| `state`                     | `string`                          | No       | User's state                                     |
+| `county`                    | `string`                          | No       | User's county                                    |
+| `cityFeel`                  | `string`                          | No       | How user feels about their city (single-select)  |
+| `childCount`                | `number`                          | No       | Number of children                               |
+| `isExpecting`               | `boolean`                         | No       | Whether user is expecting a child                |
+| `dueDate`                   | `object`                          | No       | Expected due date (`month`, `year`)              |
+| `children`                  | `array`                           | No       | Array of child objects (`name`, `birthMonth`, `birthYear`) |
+| `beforeMotherhood`          | `string[]`                        | No       | Lifestyle interests before motherhood (multi-select) |
+| `perfectWeekend`            | `string[]`                        | No       | Ideal weekend activities (multi-select)          |
+| `feelYourself`              | `string`                          | No       | Self-care preference (single-select)             |
+| `hardTruths`                | `string[]`                        | No       | Relatable motherhood challenges (multi-select)   |
+| `unexpectedJoys`            | `string[]`                        | No       | Surprising positive experiences (multi-select)   |
+| `aesthetic`                 | `string[]`                        | No       | Style/aesthetic preferences (multi-select)       |
+| `momFriendStyle`            | `string[]`                        | No       | Social connection styles (multi-select)          |
+| `whatBroughtYou`            | `string`                          | No       | Motivation for joining (single-select)           |
+| `generatedBio`              | `string`                          | No       | AI-generated bio text                            |
+| `bioApproved`               | `boolean`                         | No       | Whether user approved the generated bio          |
+| `createdAt`                 | `Firestore Timestamp`             | Yes      | Account creation timestamp                       |
+| `lastSeen`                  | `Firestore Timestamp`             | Yes      | Last time the user was active                    |
+| `fcmToken`                  | `string`                          | No       | Firebase Cloud Messaging token for push notifications |
 
 **Service file:** `src/services/firebase/users.ts`
 **Operations:** `getUserProfile`, `createUserProfile`, `updateUserProfile`, `updateUserFcmToken`, `listenToUserProfile`
 
 ---
 
-### 1.2 `rooms`
+### 1.2 `connections`
+
+Stores user connection data. Each document is keyed by the user's Firebase Auth `uid` and contains an array of connection details.
+
+| Field                  | Type                              | Required | Description                                      |
+|------------------------|-----------------------------------|----------|--------------------------------------------------|
+| `userId`               | `string`                          | Yes      | Firebase Auth user identifier (also the doc ID)  |
+| `connectionDetailsList`| `ConnectionDetails[]`             | Yes      | Array of connection detail objects                |
+| `createdAt`            | `Firestore Timestamp`             | Yes      | Document creation timestamp                      |
+
+**Nested: `ConnectionDetails`**
+
+| Field                    | Type                              | Required | Description                                      |
+|--------------------------|-----------------------------------|----------|--------------------------------------------------|
+| `userConnectedUid`       | `string`                          | Yes      | UID of the connected user                        |
+| `whoConnected`           | `"me" \| "them"`                  | Yes      | Who initiated the connection                     |
+| `connectionAcceptedAt`   | `Firestore Timestamp`             | No       | When the connection was accepted (`null` if pending) |
+| `connectionRejectedAt`   | `Firestore Timestamp`             | No       | When the connection was rejected (`null` if not rejected) |
+| `createdAt`              | `Date`                            | No       | When the connection request was created           |
+
+**Service file:** `src/services/firebase/connections.ts`
+**Document model:** One document per user (document ID = `userId`), containing all of that user's connections in a single array.
+
+---
+
+### 1.3 `rooms`
 
 Stores chat rooms. Each room contains an array of member UIDs. Documents are auto-generated by Firestore.
 
@@ -60,7 +108,7 @@ Stores chat rooms. Each room contains an array of member UIDs. Documents are aut
 
 ---
 
-### 1.3 `rooms/{roomId}/messages` (subcollection)
+### 1.4 `rooms/{roomId}/messages` (subcollection)
 
 Stores messages within a room as a subcollection. Documents are auto-generated by Firestore.
 
@@ -80,7 +128,7 @@ Stores messages within a room as a subcollection. Documents are auto-generated b
 
 ---
 
-### 1.4 `communities` (inferred)
+### 1.5 `communities` (inferred)
 
 Community data is typed but service-layer access is not yet implemented in the codebase. The structure is defined by the `Community` interface.
 
@@ -101,7 +149,7 @@ Community data is typed but service-layer access is not yet implemented in the c
 
 ---
 
-### 1.5 `drops` (inferred)
+### 1.6 `drops` (inferred)
 
 Curated product recommendation collections. Structure defined by the `Drop` interface.
 
@@ -138,7 +186,7 @@ Curated product recommendation collections. Structure defined by the `Drop` inte
 
 ---
 
-### 1.6 `introductions` (inferred)
+### 1.7 `introductions` (inferred)
 
 Manages user-to-user introduction requests. Structure defined by the `Introduction` interface.
 
@@ -157,7 +205,7 @@ Manages user-to-user introduction requests. Structure defined by the `Introducti
 
 ---
 
-### 1.7 `waitlist` (inferred)
+### 1.8 `waitlist` (inferred)
 
 Referenced conceptually as part of the onboarding referral flow. The `ReferralCode` type suggests the existence of a waitlist or referral validation collection.
 
@@ -176,7 +224,7 @@ All types are located in `src/types/` and re-exported through `src/types/index.t
 
 | Export        | Kind      | Description                                                  |
 |---------------|-----------|--------------------------------------------------------------|
-| `UserProfile` | Interface | Core user document shape stored in Firestore `users` collection. Fields: `uid`, `email`, `displayName`, `photoURL?`, `subscriptionStatus`, `createdAt`, `lastSeen`. |
+| `UserProfile` | Type (`z.infer<typeof userProfileSchema>`) | Core user document shape stored in Firestore `users` collection, validated at runtime using a Zod schema (`userProfileSchema`). Fields include `uid`, `email`, `displayName`, `photoURL?`, `subscriptionStatus`, `profileSetupCompletedAt`, `referralCode?`, all profile-setup fields, `createdAt`, `lastSeen`. |
 
 ### 2.2 `room.ts`
 
@@ -250,7 +298,7 @@ All types are located in `src/types/` and re-exported through `src/types/index.t
 
 | Export           | Kind | Description                                                       |
 |------------------|------|-------------------------------------------------------------------|
-| `SocialProvider` | Type | Union: `"instagram"`, `"facebook"`, `"linkedin"` -- supported social auth providers |
+| `AuthProvider`   | Type | `"email"` -- the supported authentication provider (email/password only) |
 
 ### 2.10 `referral.ts`
 
@@ -266,7 +314,7 @@ Re-exports the following types for convenient imports:
 - `UserProfile` from `./user`
 - `Room` from `./room`
 - `Message` from `./message`
-- `SocialProvider` from `./auth`
+- `AuthProvider` from `./auth`
 - `ReferralCode`, `ValidateReferralResult` from `./referral`
 - `ProfileSetupData`, `Child`, `DueDate`, `CityFeel`, `BeforeMotherhood`, `PerfectWeekend`, `FeelYourself`, `HardTruth`, `UnexpectedJoy`, `Aesthetic`, `MomFriendStyle`, `WhatBroughtYou` from `./profile-setup`
 
@@ -326,7 +374,7 @@ Global application state.
 
 ### 4.2 `useProfileSetupStore` (`profile-setup`)
 
-Holds the entire onboarding profile wizard state. Persisted shape mirrors the `ProfileSetupData` interface (see Section 2.7) including: `firstName`, `lastInitial`, `photoURL`, location fields, `children`, all lifestyle preference arrays, `generatedBio`, `bioApproved`, `currentStep`, and `completed`.
+Holds the entire onboarding profile wizard state. Persisted shape mirrors the `ProfileSetupData` interface (see Section 2.7) including: `firstName`, `lastInitial`, `photoURL`, location fields, `children`, all lifestyle preference arrays, `generatedBio`, `bioApproved`, `currentStep`, and `profileSetupCompletedAt`.
 
 ### 4.3 `useCommunitiesStore` (`communities`)
 
@@ -403,6 +451,10 @@ UserProfile (users)
  |
  |-- 1:N --> SavedConnection           User saves profiles from introductions
  |
+ |-- 1:1 --> Connection (connections)  via connections doc where userId == UserProfile.uid
+ |            |
+ |            |-- 1:N --> ConnectionDetails  Array of connection detail objects
+ |
  |-- 0..1 --> ProfileSetupData         Onboarding wizard state (local only)
  |
  |-- 0..1 --> ReferralCode             Validated referral code (local only)
@@ -425,6 +477,8 @@ UserProfile (users)
 | User to Hearted Items               | 1:N         | Zustand/MMKV  | Users favorite products from Drops                         |
 | Drop to Sections to Items           | 1:N:N       | Firestore     | Drops contain sections, sections contain items             |
 | User to Saved Connections           | 1:N         | Zustand/MMKV  | Users save interesting profiles from the introductions flow |
+| User to Connection                  | 1:1         | Firestore     | Each user has one `connections` document containing all their connections |
+| Connection to ConnectionDetails     | 1:N         | Firestore     | A connection document contains an array of connection detail entries |
 | User to Profile Setup               | 1:1         | Zustand/MMKV  | Onboarding wizard state persisted locally                  |
 
 ---
