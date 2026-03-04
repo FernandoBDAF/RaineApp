@@ -65,7 +65,7 @@ export function useConnectionsWithProfiles(uid: string | undefined): Connections
     isProfilesLoading: profilesQuery.isFetching && !profilesQuery.isLoading,
     isError: connectionsQuery.isError ?? false,
     connectionCount:
-      connection?.connectionDetailsList.filter((d) => d.connectionAcceptedAt).length ?? 0,
+      connection?.connectionDetailsList?.filter((d) => d.connectionAcceptedAt != null).length ?? 0,
     refetch: () => {
       connectionsQuery.refetch();
     }
