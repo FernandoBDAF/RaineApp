@@ -1,5 +1,3 @@
-import { isFirebaseMockMode, config } from '../../config/environment';
-
 const defaultFlags = {
   chatReactionsEnabled: true,
   newProfileUIEnabled: false,
@@ -11,12 +9,6 @@ const defaultFlags = {
 let cachedFlags: Record<string, boolean> = { ...defaultFlags };
 
 export async function initRemoteConfig() {
-  if (isFirebaseMockMode()) {
-    console.log('🔶 [Mock] Remote Config using default flags');
-    cachedFlags = { ...config.features };
-    return;
-  }
-
   try {
     // Lazy load to avoid native module crash when Firebase is not configured
     const remoteConfig = require('@react-native-firebase/remote-config').default;

@@ -1,30 +1,14 @@
 import type { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
-import { isFirebaseMockMode } from '../../config/environment';
 
 // Mock implementations for when Firebase is not configured
-const mockMessaging = {
-  requestPermission: async () => 1, // AUTHORIZED
-  getToken: async () => 'mock-fcm-token-' + Date.now(),
-  onMessage: (_handler: unknown) => () => {},
-  onNotificationOpenedApp: (_handler: unknown) => () => {},
-  getInitialNotification: async () => null,
-};
 
 const getMessaging = () => {
-  if (isFirebaseMockMode()) {
-    return mockMessaging;
-  }
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const messaging = require('@react-native-firebase/messaging').default;
   return messaging();
 };
 
 export async function requestNotificationPermission() {
-  if (isFirebaseMockMode()) {
-    console.log('🔶 [Mock] Notification permission granted');
-    return true;
-  }
-  
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const messaging = require('@react-native-firebase/messaging').default;
   const authStatus = await getMessaging().requestPermission();
