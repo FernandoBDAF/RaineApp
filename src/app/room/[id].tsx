@@ -3,8 +3,13 @@ import { Pressable, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import type { Message } from '../../types';
 import { useAuth } from '../../context/auth/AuthContext';
-import { isFirebaseMockMode } from '../../config/environment';
-import { listenToMessages, fetchMoreMessages, sendMessage, updateReactions } from '../../services/firebase/messages';
+
+import {
+  listenToMessages,
+  fetchMoreMessages,
+  sendMessage,
+  updateReactions
+} from '../../services/firebase/messages';
 import { MessageList } from '../../components/chat/MessageList';
 import { MessageInput } from '../../components/chat/MessageInput';
 import { ReactionPicker } from '../../components/chat/ReactionPicker';
@@ -13,9 +18,6 @@ import { useEntitlement } from '../../hooks/useEntitlement';
 
 // Helper to get server timestamp
 const getServerTimestamp = () => {
-  if (isFirebaseMockMode()) {
-    return new Date();
-  }
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const firestore = require('@react-native-firebase/firestore').default;
   return firestore.FieldValue.serverTimestamp();
@@ -109,11 +111,7 @@ export default function ChatRoomScreen() {
 
   return (
     <View className="flex-1 bg-white">
-      <MessageList
-        messages={messages}
-        currentUserId={user.uid}
-        onLoadMore={handleLoadMore}
-      />
+      <MessageList messages={messages} currentUserId={user.uid} onLoadMore={handleLoadMore} />
       {canReact && selectedMessage ? (
         <View className="absolute bottom-24 left-4 right-4 items-center">
           <ReactionPicker onSelect={handleSelectReaction} />

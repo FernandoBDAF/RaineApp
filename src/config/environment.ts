@@ -1,15 +1,3 @@
-export const isDev = __DEV__;
-
-let _firebaseMockMode = false;
-
-export function setFirebaseMockMode(enabled: boolean) {
-  _firebaseMockMode = enabled;
-}
-
-export function isFirebaseMockMode() {
-  return _firebaseMockMode;
-}
-
 export const config = {
   app: {
     name: 'Raine',

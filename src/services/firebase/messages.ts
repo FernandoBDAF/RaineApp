@@ -1,13 +1,8 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import type { Message } from '../../types';
-import { isFirebaseMockMode } from '../../config/environment';
-import { getDb } from './firestore';
 
 // Helper to get firestore instance
 const getFirestore = () => {
-  if (isFirebaseMockMode()) {
-    return getDb();
-  }
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   return require('@react-native-firebase/firestore').default();
 };
@@ -17,12 +12,6 @@ export function listenToMessages(
   limitCount: number,
   callback: (messages: Message[]) => void
 ) {
-  if (isFirebaseMockMode()) {
-    // Return empty messages in mock mode
-    setTimeout(() => callback([]), 100);
-    return () => {};
-  }
-
   return getFirestore()
     .collection('rooms')
     .doc(roomId)
@@ -43,10 +32,6 @@ export async function fetchMoreMessages(
   cursor: FirebaseFirestoreTypes.Timestamp | null,
   limitCount: number
 ): Promise<{ messages: Message[]; nextCursor: FirebaseFirestoreTypes.Timestamp | null }> {
-  if (isFirebaseMockMode()) {
-    return { messages: [], nextCursor: null };
-  }
-
   let query = getFirestore()
     .collection('rooms')
     .doc(roomId)
@@ -73,17 +58,8 @@ export async function fetchMoreMessages(
 }
 
 export async function sendMessage(roomId: string, payload: Omit<Message, 'id'>) {
-  if (isFirebaseMockMode()) {
-    console.log('🔶 [Mock] Message sent:', payload.text);
-    return 'mock-message-' + Date.now();
-  }
-
   const firestore = getFirestore();
-  const messageRef = firestore
-    .collection('rooms')
-    .doc(roomId)
-    .collection('messages')
-    .doc();
+  const messageRef = firestore.collection('rooms').doc(roomId).collection('messages').doc();
 
   await messageRef.set(payload);
   await firestore
@@ -104,11 +80,6 @@ export async function updateReactions(
   messageId: string,
   reactions: Record<string, string[]>
 ) {
-  if (isFirebaseMockMode()) {
-    console.log('🔶 [Mock] Reactions updated:', reactions);
-    return;
-  }
-
   await getFirestore()
     .collection('rooms')
     .doc(roomId)
