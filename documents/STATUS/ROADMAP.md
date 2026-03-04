@@ -16,7 +16,7 @@ RaineApp is a social platform for mothers with four pillars: Introductions (1:1 
 
 ## Current Phase
 
-Plans B through F (UI) are complete. All four tabs, feature screens, Home dashboard, and Profile redesign are implemented with mock data flows. Plan A (Backend Integration) is pending.
+Plans B through F (UI) are complete. All four tabs, feature screens, Home dashboard, and Profile redesign are implemented. Plan A (Backend Integration) is in progress — real Firebase Auth (email/password), Firestore user profiles with Zod validation, real connections system, and profile sync are implemented.
 
 ---
 
@@ -24,7 +24,7 @@ Plans B through F (UI) are complete. All four tabs, feature screens, Home dashbo
 
 | Plan | Scope | Status |
 |------|-------|--------|
-| A | Backend Integration — schema, bio function, Firestore collections, deploy | Not Started |
+| A | Backend Integration — schema, bio function, Firestore collections, deploy | In Progress |
 | B | Foundation & Navigation — types, 4-tab nav, shared components, stores | Complete |
 | C | Drops Feature — tab, viewer, My Hearts | Complete |
 | D | Introductions Feature — tab, profile detail, pending, chat | Complete |
@@ -38,15 +38,14 @@ Plans B through F (UI) are complete. All four tabs, feature screens, Home dashbo
 ### Backend Integration Priorities
 
 1. **Firebase migration** — Move to modular API (v22), resolve deprecation warnings
-2. **Firestore connection** — Connect mock services to real Firestore collections
-3. **Social auth** — Wire real Facebook SDK (requires App ID configuration)
-4. **Cloud Functions** — Deploy bio generation and matching logic
-5. **RevenueCat** — Configure API key for subscription flows
-6. **Push notifications** — Configure FCM for production
+2. **Firestore connection** — Connect remaining mock services to real Firestore collections
+3. **Cloud Functions** — Deploy bio generation and matching logic
+4. **RevenueCat** — Configure API key for subscription flows
+5. **Push notifications** — Configure FCM for production
 
 ### Feature Completion (Medium Priority)
 
-- Wire Home dashboard sections to real feature components (MomsLikeYouCarousel, CommunityPreviewList, DropPreviewCard)
+- Wire Home dashboard sections to real feature components (MomsLikeYouCarousel already loads real profiles; CommunityPreviewList, DropPreviewCard still need wiring)
 - Redesign chat room header per Plan D spec
 - Add error boundaries and offline handling
 

@@ -16,7 +16,7 @@
 | AC-5 | ZIP code validation | User-entered ZIP must be exactly 5 digits. Invalid ZIPs are rejected before any API call. | `src/services/location/index.ts` | Regex validation: `/^\d{5}$/`. Returns `{ valid: false }` on mismatch. |
 | AC-6 | Out-of-area redirect | Users whose ZIP code resolves to a county outside the approved list are redirected to an out-of-area screen instead of proceeding with profile setup. | `src/app/(profile-setup)/location.tsx` | If `result.isApproved === false`, the router pushes `/(profile-setup)/out-of-area`. |
 | AC-7 | ZIP lookup with fallback | ZIP code city/state resolution uses the Zippopotam.us API. If the API is unreachable but the ZIP is in the local `ZIP_COUNTY_MAP`, the lookup succeeds with a fallback (`city: 'Unknown'`, `state: 'CA'`). | `src/services/location/index.ts` | `catch` block in `lookupZipCode()` falls back to local county data when available. |
-| AC-8 | Profile completion gate | Authenticated users who have not completed profile setup are redirected to their current profile setup step. They cannot access the main app tabs. | `src/app/_layout.tsx` | Navigation guard: `isAuthenticated && !profileCompleted && !inProfileSetupGroup` triggers `router.replace(STEP_TO_ROUTE[currentStep])`. |
+| AC-8 | Profile completion gate | Authenticated users who have not completed profile setup are redirected to their current profile setup step. They cannot access the main app tabs. | `src/app/_layout.tsx` | Navigation guard: `isAuthenticated && !profileSetupCompletedAt && !inProfileSetupGroup` triggers `router.replace(STEP_TO_ROUTE[currentStep])`. |
 
 ---
 
@@ -24,12 +24,10 @@
 
 | # | Rule | Description | Where Enforced | How Enforced |
 |---|------|-------------|----------------|--------------|
-| AUTH-1 | Social login only | The app exposes only social login providers (Facebook, Instagram, LinkedIn). There is no email/password authentication flow in the UI. | `src/services/firebase/socialAuth.ts` | Only `signInWithFacebook`, `signInWithInstagram`, and `signInWithLinkedIn` are exported. No email auth service exists. |
-| AUTH-2 | Instagram delegates to Facebook | Instagram sign-in is implemented by calling the Facebook login flow and relabeling the provider. | `src/services/firebase/socialAuth.ts` | `signInWithInstagram()` calls `signInWithFacebook()` then spreads `{ ...result, provider: 'instagram' }`. |
-| AUTH-3 | LinkedIn not yet implemented | LinkedIn login returns a failure with an explicit "not yet implemented" message in production. In dev, it falls through to mock auth. | `src/services/firebase/socialAuth.ts` | `signInWithLinkedIn()` returns `{ success: false, error: 'LinkedIn sign in not yet implemented' }` when not in mock mode. |
-| AUTH-4 | Facebook SDK in production only | The real Facebook SDK (`react-native-fbsdk-next`) is used only when both conditions are true: (a) not in dev mode, and (b) Firebase mock mode is off. | `src/services/firebase/socialAuth.ts` | `shouldUseRealFacebookSdk()` returns `false` if `isDev` or `isFirebaseMockMode()`. Dynamic `import()` of the SDK is guarded by this check. |
-| AUTH-5 | Facebook permissions | Facebook login requests `public_profile` and `email` permissions. | `src/services/firebase/socialAuth.ts` | `LoginManager.logInWithPermissions(['public_profile', 'email'])`. |
-| AUTH-6 | Mock auth in development | In dev mode, all social login calls route to `mockSocialLogin()`, which invokes `loginAsMockUser()` from the mock auth module. | `src/services/firebase/socialAuth.ts` | `shouldUseRealFacebookSdk()` returns `false` in dev; `mockSocialLogin(provider)` is called instead. |
+| AUTH-1 | Email/password only | The app uses email/password authentication exclusively. No social login providers (Facebook, Instagram, LinkedIn) are offered. | `src/services/firebase/auth.ts` | Only `signUpWithEmail` and `signInWithEmail` are exported. No social auth service exists. |
+| AUTH-2 | Signup requires referral code | New account registration requires a valid referral code previously validated and cached in MMKV. | `src/services/firebase/auth.ts`, `src/app/(auth)/signup.tsx` | Signup flow reads `getJson<ReferralCode>(storageKeys.validatedReferralCode)` before allowing account creation. |
+| AUTH-3 | Password minimum length | Passwords must be at least 6 characters. Shorter passwords are rejected client-side before any Firebase call. | `src/app/(auth)/signup.tsx` | Client-side validation enforces `password.length >= 6` before calling `createUserWithEmailAndPassword`. |
+| AUTH-4 | Firebase Auth provider | Authentication is handled via Firebase Auth's email/password provider (`createUserWithEmailAndPassword`, `signInWithEmailAndPassword`). | `src/services/firebase/auth.ts` | Firebase Auth SDK methods `createUserWithEmailAndPassword` and `signInWithEmailAndPassword` are used directly. |
 | AUTH-7 | Unauthenticated redirect | Any unauthenticated user navigating outside the onboarding or auth groups is redirected to the splash screen. | `src/app/_layout.tsx` | Navigation guard: `!isAuthenticated && !inOnboardingGroup && !inAuthGroup` triggers `router.replace('/(onboarding)/splash')`. |
 
 ---
@@ -42,8 +40,8 @@
 | PS-2 | Step-to-route mapping | Each step number maps to a specific route. Steps: 1-Name, 2-Photo, 3-Location, 4-City Feel, 5-Children, 6-Before Motherhood, 7-Perfect Weekend, 8-Feel Yourself, 9-Hard Truth, 10-Unexpected Joys, 11-Aesthetic, 12-Mom Friends, 13-What Brought You, 14-Bio. | `src/constants/profile-options.ts` | `STEP_TO_ROUTE: Record<number, string>` maps each integer to its route path. |
 | PS-3 | Step progression | Moving forward increments `currentStep` via `setCurrentStep()`. The store persists the current step so users resume where they left off. | `src/store/profileSetupStore.ts` | `setCurrentStep(currentStep)` updates Zustand state; persisted to MMKV via `persist` middleware. |
 | PS-4 | Back navigation | Navigating backward decrements the step but never below 1. | `src/store/profileSetupStore.ts` | `decrementStep()` uses `Math.max(1, state.currentStep - 1)`. |
-| PS-5 | Profile completion flag | Completion is marked by setting `completed: true`. This flag controls whether the navigation guard redirects users back into setup. | `src/store/profileSetupStore.ts` | `completeSetup()` sets `{ completed: true }`. Read by `_layout.tsx` as `profileCompleted`. |
-| PS-6 | Profile reset | The entire profile can be reset to its initial state, clearing all fields and returning to step 1 with `completed: false`. | `src/store/profileSetupStore.ts` | `reset()` applies `initialState` object. |
+| PS-5 | Profile completion flag | Completion is marked by setting `profileSetupCompletedAt` to a timestamp string. This field (not a boolean) controls whether the navigation guard redirects users back into setup. | `src/store/profileSetupStore.ts` | `completeSetup()` sets `profileSetupCompletedAt` to the current ISO timestamp. Read by `_layout.tsx` as `profileSetupCompletedAt`. |
+| PS-6 | Profile reset | The entire profile can be reset to its initial state, clearing all fields and returning to step 1 with `profileSetupCompletedAt` set to `null`. | `src/store/profileSetupStore.ts` | `reset()` applies `initialState` object. |
 | PS-7 | Persistent state | All profile setup data survives app restarts. The store is persisted under the key `"profile-setup"` using MMKV storage. | `src/store/profileSetupStore.ts` | Zustand `persist` middleware with `storage: mmkvStorage` and `name: "profile-setup"`. |
 | PS-8 | City Feel options | Single-select from 3 options: Rooted, Still finding your footing, Like a local but missing where you're from. | `src/constants/profile-options.ts` | `CITY_FEEL_OPTIONS` array (3 items). Store field `cityFeel` accepts a single value (`null` or option ID). |
 | PS-9 | Before Motherhood options | Multi-select from 6 options: Travel, Hosting, Movement, Nature, Culture, Career. | `src/constants/profile-options.ts` | `BEFORE_MOTHERHOOD_OPTIONS` array (6 items). Store field `beforeMotherhood` is an array. |
@@ -65,8 +63,7 @@
 | FF-1 | Remote Config source | Feature flags are fetched from Firebase Remote Config at app startup. If the fetch fails, hardcoded defaults are used. | `src/services/firebase/remoteConfig.ts` | `initRemoteConfig()` calls `rc.fetchAndActivate()` inside a try/catch; on failure, `cachedFlags` retains `defaultFlags`. |
 | FF-2 | chatReactionsEnabled | Controls whether chat reaction UI is available. Default: `true` (Remote Config), `true` (environment config). | `src/services/firebase/remoteConfig.ts`, `src/config/environment.ts` | `defaultFlags.chatReactionsEnabled = true`; `config.features.chatReactionsEnabled = true`. |
 | FF-3 | newProfileUIEnabled | Controls whether a redesigned profile UI is shown. Default: `false` (Remote Config), `false` (environment config). | `src/services/firebase/remoteConfig.ts`, `src/config/environment.ts` | `defaultFlags.newProfileUIEnabled = false`; `config.features.newProfileUIEnabled = false`. |
-| FF-4 | subscriptionGatingEnabled | Controls whether subscription-gated features are enforced. Default: `true` (Remote Config), `false` (environment config / mock mode). | `src/services/firebase/remoteConfig.ts`, `src/config/environment.ts` | Remote Config default: `true`. Environment config: `false` (comment: "Disabled in mock mode"). In mock mode, `initRemoteConfig()` uses `config.features` instead of `defaultFlags`. |
-| FF-5 | Mock mode flag override | In mock mode, feature flags load from `config.features` (environment.ts) rather than Remote Config defaults, effectively disabling subscription gating. | `src/services/firebase/remoteConfig.ts` | `if (isFirebaseMockMode()) { cachedFlags = { ...config.features }; return; }`. |
+| FF-4 | subscriptionGatingEnabled | Controls whether subscription-gated features are enforced. Default: `true` (Remote Config), `true` (environment config). | `src/services/firebase/remoteConfig.ts`, `src/config/environment.ts` | Remote Config default: `true`. Environment config: `true`. |
 | FF-6 | Hook-based consumption | Components consume feature flags via the `useFeatureFlag` hook, which accepts a typed union of flag keys and re-evaluates after Remote Config initializes. | `src/hooks/useFeatureFlag.ts` | `useFeatureFlag(key)` initializes state from `getFeatureFlag(key)`, then re-fetches after `initRemoteConfig()` resolves. |
 
 ---
@@ -110,20 +107,6 @@
 
 ---
 
-## 8. Mock Mode
-
-| # | Rule | Description | Where Enforced | How Enforced |
-|---|------|-------------|----------------|--------------|
-| MM-1 | Dev equals mock | In development (`__DEV__ === true`), Firebase mock mode is always enabled regardless of whether Firebase config files are present. | `src/config/environment.ts` | `isFirebaseMockMode()` returns `_firebaseMockMode \|\| isDev`. Since `isDev = __DEV__`, dev always resolves to `true`. |
-| MM-2 | Auto-detection at startup | At app launch, the root layout checks for initialized Firebase apps. If none exist (no config files) or if the import fails, mock mode is activated. | `src/app/_layout.tsx` | `RootLayout` runs `checkFirebase()`: inspects `firebase.default.apps.length`; calls `setFirebaseMockMode(true)` if zero or on error. |
-| MM-3 | All Firebase services mocked | When mock mode is active, all Firebase-dependent services (auth, Firestore, Remote Config, Storage) use mock implementations. No real Firestore writes or reads occur. | `src/config/environment.ts`, `src/services/firebase/socialAuth.ts`, `src/services/firebase/remoteConfig.ts` | Each service checks `isFirebaseMockMode()` and branches to mock behavior. Auth uses `loginAsMockUser()`, Remote Config uses `config.features` defaults. |
-| MM-4 | Force mock mode | A configuration flag allows forcing mock mode even when Firebase config files are present. | `src/config/environment.ts` | `config.firebase.forceMockMode: false` (default off; can be set to `true`). |
-| MM-5 | RevenueCat disabled in mock | Without the `EXPO_PUBLIC_REVENUECAT_API_KEY` environment variable (typical in dev), RevenueCat is not configured and all purchase functions return safe stubs. | `src/services/revenuecat/index.ts` | `configureRevenueCat()` exits early if `apiKey` is empty; `revenueCatConfigured` remains `false`; all functions check this flag before calling the SDK. |
-| MM-6 | Feature flag override in mock | In mock mode, Remote Config is not fetched. Feature flags are sourced from `config.features` in environment.ts, which sets `subscriptionGatingEnabled: false`. | `src/services/firebase/remoteConfig.ts` | `initRemoteConfig()` returns early with `cachedFlags = { ...config.features }` when `isFirebaseMockMode()` is `true`. |
-| MM-7 | Firebase readiness gate | The app renders nothing (`return null`) until the Firebase configuration check completes, preventing components from accessing Firebase services before mock mode is determined. | `src/app/_layout.tsx` | `if (!firebaseReady) return null;` in `RootLayout` component. |
-
----
-
 ## Cross-References
 
 | Document | Relevance |
@@ -132,4 +115,4 @@
 | [2-USER-FLOWS.md](./2-USER-FLOWS.md) | Step-by-step user journeys that these rules govern. |
 | Feature Specs (when created) | Detailed specifications for features gated by these rules. |
 | Data Model (when created) | Schema definitions for profile fields referenced in Profile Setup rules. |
-| Decision Log (when created) | Architectural decisions behind rule choices (e.g., social-only auth, geographic restriction). |
+| Decision Log (when created) | Architectural decisions behind rule choices (e.g., email/password auth, geographic restriction). |

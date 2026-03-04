@@ -12,7 +12,7 @@ These five rules are prescriptive invariants that the RaineApp codebase must fol
 
 ## 1. Never import native modules at the top level of route files
 
-**Rule statement:** Native modules (`react-native-purchases`, `react-native-fbsdk-next`, `@react-native-firebase/*`) must never appear in a top-level `import` in any file that is part of the Expo Router route tree or is imported (directly or transitively) by a route file.
+**Rule statement:** Native modules (`react-native-purchases`, `@react-native-firebase/*`) must never appear in a top-level `import` in any file that is part of the Expo Router route tree or is imported (directly or transitively) by a route file.
 
 **Why:** Expo Router eagerly loads all route modules to build the navigation tree. If a route module imports a native module at the top level, that module's `NativeEventEmitter` initialises before the React Native runtime is ready, causing `TypeError: Cannot read property 'EventEmitter' of undefined`.
 
@@ -51,37 +51,49 @@ import type { PurchasesOffering } from 'react-native-purchases';
 let x: typeof import('react-native-purchases').default;
 ```
 
-**Enforcement:** Grep route files and their transitive imports for `import.*from.*react-native-purchases`, `import.*from.*@react-native-firebase/`, `import.*from.*react-native-fbsdk-next`. Type-only imports in route files may trigger resolution; prefer local type definitions. Run `yarn dev` and verify no EventEmitter crash on cold start.
+**Enforcement:** Grep route files and their transitive imports for `import.*from.*react-native-purchases`, `import.*from.*@react-native-firebase/`. Type-only imports in route files may trigger resolution; prefer local type definitions. Run `yarn dev` and verify no EventEmitter crash on cold start.
 
 ---
 
-## 2. Dev mode = mock mode
+## 2. Firebase Must Be Configured
 
-**Rule statement:** When `isDev` is true (`__DEV__ === true`), `isFirebaseMockMode()` must return `true`, regardless of whether `google-services.json` exists.
+**Rule statement:** The app requires valid Firebase configuration in ALL environments. The files `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) must be present in the project, and `EXPO_PUBLIC_FIREBASE_*` environment variables must be set. There is no mock fallback — `isFirebaseMockMode()` always returns `false`.
 
-**Why:** The development build includes Firebase native modules, but the Facebook SDK is not configured (no App ID in `app.json` plugins). Real social login would crash. Mock auth creates a user with uid `mock-user-123`, which has no Firestore permissions. Real Firebase Auth has no session for that user, so sign-out would fail. Enabling mock mode globally in dev avoids all of these.
+**Why:** Mock mode was removed. All authentication uses real Firebase Auth with email/password. Every environment (development, preview, production) talks to real Firebase services. Without valid config files and environment variables, the app will fail to initialize Firebase and crash at startup.
 
 **Correct example:**
 
 ```typescript
 // src/config/environment.ts
-export const isDev = __DEV__;
-
 export function isFirebaseMockMode() {
-  return _firebaseMockMode || isDev;
+  return false;
 }
+```
+
+```text
+# Required files in project root
+android/app/google-services.json
+ios/GoogleService-Info.plist
+
+# Required environment variables
+EXPO_PUBLIC_FIREBASE_API_KEY=...
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=...
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+EXPO_PUBLIC_FIREBASE_APP_ID=...
 ```
 
 **Incorrect example:**
 
 ```typescript
-// Only checking config file presence — mock user has no Firestore permissions
+// Falling back to mock mode in dev — no longer supported
 export function isFirebaseMockMode() {
-  return !hasGoogleServicesJson();
+  return _firebaseMockMode || isDev;
 }
 ```
 
-**Enforcement:** Ensure `isFirebaseMockMode()` includes `|| isDev` in its return expression. In development, all Firebase services that check this flag will use mocks. Verify `yarn dev` allows full flow: splash, referral, login, profile setup, home, sign out.
+**Enforcement:** Verify `isFirebaseMockMode()` returns `false` unconditionally. Confirm `google-services.json` and `GoogleService-Info.plist` exist in the project. Verify `EXPO_PUBLIC_FIREBASE_*` env vars are set in `.env`. Run `yarn dev` and confirm Firebase initializes successfully and email/password auth works end-to-end.
 
 ---
 

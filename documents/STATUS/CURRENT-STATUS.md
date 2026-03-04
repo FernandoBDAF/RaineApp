@@ -41,8 +41,8 @@ has undergone two major evolutions:
    are now implemented with full mock data flows.
 
 2. **Dev build stabilization** — Six runtime crashes were identified and fixed,
-   establishing a robust mock-mode architecture that allows the full UI to run
-   without real Firebase/Facebook/RevenueCat credentials.
+   establishing a robust architecture with real Firebase integration in all
+   environments.
 
 **Current overall progress: ~75% of full vision** (UI complete, backend
 integration and polish remaining).
@@ -53,8 +53,8 @@ integration and polish remaining).
 
 | Area | Doc 2 Status (Feb 3) | Current Status | Change |
 |------|---------------------|----------------|--------|
-| Onboarding (splash, referral) | 90% | 95% — fully functional with mock auth | +5% |
-| Authentication (login, social) | 90% | 95% — mock social login works end-to-end | +5% |
+| Onboarding (splash, referral) | 90% | 95% — fully functional with real Firebase Auth | +5% |
+| Authentication (login, email/password) | 90% | 95% — real email/password auth works end-to-end | +5% |
 | Profile Setup (14 steps) | 95% | 98% — bio generation, Firestore skip in dev | +3% |
 | Home Dashboard | Not started | 85% — ActivityDashboard + sections with placeholder data | New |
 | Introductions | Not started | 80% — tab, profile detail, pending, conversations (mock) | New |
@@ -64,7 +64,7 @@ integration and polish remaining).
 | Chat Rooms | 60% | 60% — messages, reactions; needs redesigned header | No change |
 | Subscriptions | 40% | 40% — RevenueCat wired but no API key | No change |
 | Push Notifications | 30% | 30% — service exists, needs real config | No change |
-| **Dev Infrastructure** | Broken | **Stable** — mock mode, lazy loading, splash fix | Major improvement |
+| **Dev Infrastructure** | Broken | **Stable** — real Firebase integration, lazy loading, splash fix | Major improvement |
 
 ---
 
@@ -77,7 +77,7 @@ integration and polish remaining).
 |--------|-------|---------------|
 | Splash | `(onboarding)/splash` | Complete — timer, referral check, navigation |
 | Referral Code | `(onboarding)/referral` | Complete — 7-char OTP, validation, invite link |
-| Login | `(auth)/login` | Complete — social buttons, reset app data |
+| Login | `(auth)/login` | Complete — email/password form with signup link |
 | Terms | `(auth)/terms` | Placeholder — static text only |
 
 #### Profile Setup (14 steps)
@@ -141,17 +141,16 @@ integration and polish remaining).
 
 | Service | Status | Notes |
 |---------|--------|-------|
-| `firebase/auth` | Mock in dev | Real Firebase Auth in production |
-| `firebase/socialAuth` | Mock in dev | Real Facebook SDK only in production |
-| `firebase/users` | Mock in dev | Firestore user profiles |
-| `firebase/rooms` | Mock in dev | Firestore chat rooms |
-| `firebase/messages` | Mock in dev | Firestore messages with reactions |
-| `firebase/notifications` | Mock in dev | FCM push notifications |
-| `firebase/remoteConfig` | Mock in dev | Feature flags |
-| `firebase/firestore` | Mock in dev | Firestore instance wrapper |
-| `firebase/mock/mockAuth` | Active in dev | In-memory auth with listeners |
-| `profile/` | Skips in dev | Firestore save, Storage upload, waitlist |
-| `bio/` | Mock in dev | Cloud Functions for AI bio generation |
+| `firebase/auth` | Real | Firebase Auth (email/password) in all environments |
+| `firebase/users` | Real | Firestore user profiles with Zod validation |
+| `firebase/connections` | Real | Firestore connections (send, accept, decline, list) |
+| `firebase/rooms` | Real | Firestore chat rooms |
+| `firebase/messages` | Real | Firestore messages with reactions |
+| `firebase/notifications` | Real | FCM push notifications |
+| `firebase/remoteConfig` | Real | Feature flags |
+| `firebase/firestore` | Real | Firestore instance wrapper |
+| `profile/` | Real | Firestore save, Storage upload, waitlist |
+| `bio/` | Real | Cloud Functions for AI bio generation |
 | `revenuecat/` | Unconfigured | Lazy-loaded, returns mock data without API key |
 | `communities/` | Mock only | Hardcoded mock communities, posts, replies |
 | `drops/` | Mock only | Hardcoded mock drops with items |
@@ -185,11 +184,11 @@ All feature domains have complete type definitions: `auth`, `community`, `drop`,
 ### What's Working Well
 
 1. **File-based routing** — Expo Router with `src/app/` root is clean and consistent.
-2. **Mock mode architecture** — `isFirebaseMockMode()` + `isDev` guard lets the
-   full UI flow work without any backend credentials.
+2. **Real Firebase in all environments** — Auth, Firestore, and connections
+   use real Firebase in both dev and production.
 3. **Lazy native module loading** — All native modules (`react-native-purchases`,
-   `@react-native-firebase/*`, `react-native-fbsdk-next`) use lazy `require()`
-   to avoid EventEmitter crashes at startup.
+   `@react-native-firebase/*`) use lazy `require()` to avoid EventEmitter
+   crashes at startup.
 4. **Component library** — 43 components across 10 folders with consistent
    NativeWind styling.
 5. **State management** — Zustand stores with MMKV persistence for offline-first UX.
@@ -216,12 +215,10 @@ These rules are documented in detail in
 
 1. **Never import native modules at the top level** of route files or files
    transitively imported by routes.
-2. **Dev mode = mock mode** — `isFirebaseMockMode()` returns `true` when
-   `__DEV__` is `true`.
-3. **Single entry point** — `"main": "expo-router/entry"` in `package.json`.
+2. **Single entry point** — `"main": "expo-router/entry"` in `package.json`.
    No root `index.ts` or `App.tsx`.
-4. **Splash screen locked at module level** in `_layout.tsx`.
-5. **Index route redirects to onboarding splash**, not to tabs.
+3. **Splash screen locked at module level** in `_layout.tsx`.
+4. **Index route redirects to onboarding splash**, not to tabs.
 
 ---
 
@@ -232,9 +229,8 @@ These rules are documented in detail in
 | Task | Effort | Blocked By |
 |------|--------|-----------|
 | Migrate Firebase services to modular API (v22) | 2-3 days | Nothing |
-| Connect social auth to real Facebook SDK | 1 day | Facebook App ID in app.json |
 | Set up Firestore security rules | 1 day | Backend schema finalization |
-| Connect mock services to real Firestore | 2-3 days | Security rules |
+| Connect remaining mock services to real Firestore | 2-3 days | Security rules |
 | Deploy Cloud Functions (bio generation, matching) | 1-2 days | Backend repo |
 | Configure RevenueCat with real API key | 0.5 day | RevenueCat dashboard |
 | Configure push notifications (FCM) | 1 day | Firebase project |
@@ -281,13 +277,14 @@ These rules are documented in detail in
 ## Conclusion
 
 The app has progressed from a profile-setup-only prototype (doc 2) to a
-feature-complete UI with all four pillars implemented. The critical gap is
-**backend integration** — all user-facing screens exist and render correctly
-with mock data, but no screen connects to real Firestore, real social auth,
-or real push notifications in production.
+feature-complete UI with all four pillars implemented. Core backend
+integration is underway — real Firebase Auth (email/password), Firestore
+user profiles with Zod validation, and a real connections system are live
+in all environments. The remaining gap is wiring the feature-pillar
+screens (Communities, Drops, Introductions) to real Firestore collections.
 
-The development infrastructure is now stable: the dev build launches cleanly,
-mock mode prevents all Firebase crashes, and the full user flow
+The development infrastructure is stable: the dev build launches cleanly,
+Firebase is real in all environments, and the full user flow
 (splash → referral → login → profile setup → home → features → sign out)
 works end-to-end on the Android emulator.
 

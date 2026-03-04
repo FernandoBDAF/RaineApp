@@ -26,37 +26,32 @@ The root layout (`_layout.tsx`) acts as a centralized navigation guard that eval
 | Priority | Condition | Action |
 |----------|-----------|--------|
 | 1 | **Unauthenticated** -- `isAuthenticated` is `false` and user is not already in `(onboarding)` or `(auth)` group | Redirect to `/(onboarding)/splash` |
-| 2 | **Authenticated, profile incomplete** -- `isAuthenticated` is `true`, `profileCompleted` is `false`, and user is not already in `(profile-setup)` group | Redirect to the profile-setup step matching `currentStep` via the `STEP_TO_ROUTE` map (defaults to `/(profile-setup)/name`) |
-| 3 | **Authenticated, profile complete** -- `isAuthenticated` is `true`, `profileCompleted` is `true`, and user is still in `(onboarding)`, `(auth)`, or `(profile-setup)` (excluding the `welcome` screen) | Redirect to `/(tabs)` (Home) |
+| 2 | **Authenticated, profile incomplete** -- `isAuthenticated` is `true`, `profileSetupCompletedAt` is `null`, and user is not already in `(profile-setup)` group | Redirect to the profile-setup step matching `currentStep` via the `STEP_TO_ROUTE` map (defaults to `/(profile-setup)/name`) |
+| 3 | **Authenticated, profile complete** -- `isAuthenticated` is `true`, `profileSetupCompletedAt` is set, and user is still in `(onboarding)`, `(auth)`, or `(profile-setup)` (excluding the `welcome` screen) | Redirect to `/(tabs)` (Home) |
 
 ### Initialization Sequence
 
 Before guards execute, the root layout performs the following setup:
 
-1. **Firebase check** -- Detects whether Firebase is properly configured. If not (common in development), enables mock mode automatically.
+1. **Firebase init** -- Firebase initializes directly — no mock mode check.
 2. **Provider wrapping** -- Wraps the app in `QueryClientProvider` and `AuthProvider`.
 3. **Remote config** -- Initializes Firebase Remote Config on mount.
-4. **RevenueCat** -- Configures RevenueCat for subscription management, then identifies the user once `uid` is available.
-5. **Push notifications** -- Registers a listener for notification-opened events and checks for an initial notification (deep-links to `/room/[id]`).
-6. **Splash hide** -- Once `isLoading` resolves to `false`, the native splash screen is hidden and the guard logic begins.
+4. **Splash hide** -- Once `isLoading` resolves to `false`, the native splash screen is hidden and the guard logic begins.
 
 ### Route Groups
 
 | Group | Purpose |
 |-------|---------|
 | `(onboarding)` | Splash screen, referral code entry |
-| `(auth)` | Social login, terms of service |
+| `(auth)` | Email/password login, terms of service |
 | `(profile-setup)` | 14-step profile wizard, welcome screen |
 | `(tabs)` | Main app tabs: Home, Introductions, Communities, Drops |
 | Top-level screens | `profile`, `room/[id]`, `drop/[id]`, `introduction/[userId]`, `introduction/pending`, `community/[id]`, `subscription` |
 
 ```mermaid
 graph TD
-    appLaunch["App Launch"] --> firebaseCheck{"Firebase configured?"}
-    firebaseCheck -->|Yes| realMode["Real Firebase mode"]
-    firebaseCheck -->|No| mockMode["Mock Firebase mode"]
-    realMode --> authLoad["AuthProvider loads user state"]
-    mockMode --> authLoad
+    appLaunch["App Launch"] --> firebaseInit["Firebase initializes"]
+    firebaseInit --> authLoad["AuthProvider loads user state"]
     authLoad --> hideSplash["Hide native splash screen"]
     hideSplash --> guardEval{"Evaluate navigation guards"}
     guardEval -->|Unauthenticated| onboarding["/(onboarding)/splash"]
@@ -85,12 +80,12 @@ The onboarding flow gates new users through a referral code system before allowi
   - **Invalid**: Displays an error message with a shake animation; input resets.
 - Users without a code can tap "Request an invite" to open a pre-filled email to `access@raineapp.com`.
 
-### 2.3 Social Login
+### 2.3 Email/Password Login
 
-- Offers three social authentication providers: **Instagram**, **Facebook**, and **LinkedIn**.
-- Each provider calls its respective sign-in service (`signInWithInstagram`, `signInWithFacebook`, `signInWithLinkedIn`).
-- In development, Firebase mock mode provides simulated authentication.
-- On successful sign-in, the `AuthProvider` updates `isAuthenticated` to `true`, triggering the navigation guard to redirect to profile setup.
+- Presents an email and password form with input validation.
+- Existing users sign in via `signInWithEmailAndPassword` through Firebase Auth.
+- New users tap "Sign up" to create an account via `createUserWithEmailAndPassword`.
+- On successful authentication, the `AuthProvider` updates `isAuthenticated` to `true`, triggering the navigation guard to redirect to profile setup.
 - The login screen also provides a "Reset app data" action (clears MMKV storage and resets profile setup state) and links to Terms of Service and Privacy Policy.
 
 ### 2.4 Profile Setup (14 Steps)
@@ -135,10 +130,10 @@ graph TD
     validate -->|No| shakeError["Shake + Error Message"]
     shakeError --> referral
     referral --> requestInvite["Request Invite (email)"]
-    login --> socialAuth{"Social Login"}
-    socialAuth -->|Instagram| authResult{"Auth success?"}
-    socialAuth -->|Facebook| authResult
-    socialAuth -->|LinkedIn| authResult
+    login --> authForm{"Email/Password Auth"}
+    authForm -->|"Sign in"| authResult{"Auth success?"}
+    authForm -->|"Sign up"| createAccount["Create Account"]
+    createAccount --> authResult
     authResult -->|No| loginError["Display Error"]
     loginError --> login
     authResult -->|Yes| step1["Step 1: Name"]
